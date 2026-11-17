@@ -2,7 +2,10 @@ import json
 import re
 from pathlib import Path
 
+from tag_sentences import TAG_ORDER, compute_tags
+
 ROOT = Path(__file__).resolve().parents[1]
+MAX_LEN_KO, MAX_LEN_EN = 100, 150
 SYMBOLS = set("`~!@#$%^&*()-_=+[]{}\\|;:'\",.<>/?")
 
 
@@ -16,7 +19,7 @@ def check_text(text, path):
     bad = sorted(set(ch for ch in text if not allowed(ch)))
     if bad:
         errors.append("허용 문자 위반: " + "".join(repr(ch) for ch in bad))
-    limit = 120 if any(ch.isascii() and ch.isalpha() for ch in text) else 60
+    limit = MAX_LEN_EN if any(ch.isascii() and ch.isalpha() for ch in text) else MAX_LEN_KO
     if len(text) < 5 or len(text) > limit:
         errors.append(f"길이 위반: {len(text)}자 (허용 5~{limit}자)")
     if "\n" in text and path.name != "coding.jsonl":
@@ -27,7 +30,8 @@ def check_text(text, path):
 def check_record(path, number, row, seen):
     if not isinstance(row, dict): return [f"{path.name} | line {number} | JSON 객체가 아님"]
     sid, errors = row.get("id", "?"), []
-    if set(row) != {"id", "text"}: errors.append("필드는 id, text만 허용 (category/tags 금지)")
+    if set(row) != {"id", "category", "text", "tags"}: errors.append("필드는 id, category, text, tags만 허용")
+    if row.get("category") != path.stem: errors.append(f"category 위반 (예상: {path.stem})")
     if not isinstance(sid, str) or not re.fullmatch(r"[A-Za-z0-9_-]+_\d{3}", sid): errors.append("id 형식 위반")
     else:
         if sid in seen: errors.append("중복 id")
@@ -35,7 +39,11 @@ def check_record(path, number, row, seen):
         if sid != f"{path.stem}_{number:03d}": errors.append(f"id 순서 위반 (예상: {path.stem}_{number:03d})")
     text = row.get("text")
     if not isinstance(text, str): errors.append("text가 문자열이 아님")
-    else: errors.extend(check_text(text, path))
+    else:
+        errors.extend(check_text(text, path))
+        tags = row.get("tags")
+        if not isinstance(tags, list) or any(tag not in TAG_ORDER for tag in tags): errors.append("tags에 목록에 없는 태그 있음")
+        elif tags != compute_tags(text): errors.append(f"tags 불일치 (계산 결과: {compute_tags(text)})")
     return [f"{path.name} | {sid} | {error}" for error in errors]
 
 
