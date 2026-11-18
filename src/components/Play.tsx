@@ -1,23 +1,32 @@
 import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { Keyboard } from "./Keyboard";
-import { KEYPOS, MODIFIERS, TYPABLE, charFor, handOf, jamoFor, keysForText } from "../lib/keyboard";
+import { KEYPOS, MODIFIERS, TYPABLE, charFor, handOf, jamoFor, keysForText, type WristAnchors } from "../lib/keyboard";
 import { composeTyped, type TypedKey } from "../lib/hangul";
+import { activeElapsedMs, shouldIgnoreKeyWhilePaused } from "../lib/pauseMetrics";
 import type { Sentence } from "../lib/sentences";
-import type { KeyEvent, RoundRecord } from "../lib/types";
+import type { KeyEvent, PauseInterval, RoundRecord } from "../lib/types";
 
-type Entry = { ok: boolean; code: string; shift: boolean; ime: boolean };
+type Entry = { ok: boolean; code: string; shift: boolean; ime: boolean; resumedAfterPause?: boolean };
 type Props = {
   rounds: Sentence[];
   hint: boolean;
-  onFinish: (records: RoundRecord[]) => void;
+  wristAnchors: WristAnchors;
+  electron: boolean;
+  roundCount: number;
+  onFinish: (records: RoundRecord[], pauses?: PauseInterval[]) => void;
   onAbort: () => void;
 };
 
-export function Play({ rounds, hint, onFinish, onAbort }: Props) {
+export function Play({ rounds, hint, wristAnchors, electron, roundCount, onFinish, onAbort }: Props) {
   const [idx, setIdx] = useState(0);
   const [wrong, setWrong] = useState<string | null>(null);
+  const [paused, setPaused] = useState(false);
+  const [resumeNotice, setResumeNotice] = useState(false);
+  const [resumeRecordedDelay, setResumeRecordedDelay] = useState<number | null>(null);
+  const [clockNow, setClockNow] = useState(() => performance.now());
   const [, render] = useReducer((n: number) => n + 1, 0);
   const catcher = useRef<HTMLInputElement>(null);
+  const sessionStartedAt = useRef(performance.now());
   const sentence = rounds[idx];
   const expected = useMemo(() => keysForText(sentence.text), [sentence]);
 
@@ -25,7 +34,9 @@ export function Play({ rounds, hint, onFinish, onAbort }: Props) {
   live.current = { idx, expected, sentence };
   const st = useRef({
     buf: [] as Entry[], events: [] as KeyEvent[], t0: 0, locked: false, done: false, caps: false,
-    lastEnter: 0, lastSpace: 0, lastMismatch: false, records: [] as RoundRecord[],
+    lastEnter: 0, lastSpace: 0, lastPunctuation: {} as Record<string, number>, lastMismatch: false, records: [] as RoundRecord[],
+    paused: false, pauseStartedAt: 0, roundPausedMs: 0, pauseSeq: 0, resumeAt: 0, resumeFirstPending: false,
+    pauses: [] as PauseInterval[],
   });
 
   useEffect(() => {
@@ -34,6 +45,8 @@ export function Play({ rounds, hint, onFinish, onAbort }: Props) {
     s.events = [];
     s.done = false;
     s.lastMismatch = false;
+    s.lastPunctuation = {};
+    s.roundPausedMs = 0;
     s.locked = true;
     const raf = requestAnimationFrame(() => {
       s.t0 = performance.now();
@@ -41,6 +54,38 @@ export function Play({ rounds, hint, onFinish, onAbort }: Props) {
     });
     return () => cancelAnimationFrame(raf);
   }, [idx]);
+
+  useEffect(() => {
+    if (!electron || paused) return;
+    const timer = window.setInterval(() => setClockNow(performance.now()), 200);
+    return () => window.clearInterval(timer);
+  }, [electron, paused]);
+
+  const togglePause = () => {
+    if (!electron) return;
+    const s = st.current;
+    const now = performance.now();
+    if (!s.paused) {
+      s.paused = true;
+      s.pauseStartedAt = now;
+      s.pauseSeq += 1;
+      const mark = Math.round(now - sessionStartedAt.current);
+      s.pauses.push({ seq: s.pauseSeq, startMs: mark, endMs: mark });
+      setPaused(true);
+      setResumeRecordedDelay(null);
+      setClockNow(now);
+    } else {
+      const pause = s.pauses.at(-1);
+      if (pause) pause.endMs = Math.round(now - sessionStartedAt.current);
+      s.roundPausedMs += now - s.pauseStartedAt;
+      s.paused = false;
+      s.resumeAt = now;
+      s.resumeFirstPending = true;
+      setResumeNotice(true);
+      setPaused(false);
+      setClockNow(now);
+    }
+  };
 
   useEffect(() => {
     let flashTimer = 0;
@@ -52,22 +97,19 @@ export function Play({ rounds, hint, onFinish, onAbort }: Props) {
     const onKey = (e: KeyboardEvent) => {
       const s = st.current;
       const { expected: exp, idx: i, sentence: sent } = live.current;
+      if (electron && shouldIgnoreKeyWhilePaused(s.paused)) {
+        e.preventDefault();
+        return;
+      }
       const isCtrlKey = ["ControlLeft", "ControlRight", "MetaLeft", "MetaRight"].includes(e.code);
       if ((e.ctrlKey || e.metaKey) && !isCtrlKey) return;
       e.preventDefault();
       if (s.locked || (e.repeat && e.code !== "Backspace")) return;
 
-      if (s.done) {
+      if (e.code === "Comma" || e.code === "Period") {
         const now = performance.now();
-        if ((e.code === "Enter" || e.code === "NumpadEnter") && now - s.lastEnter > 250) {
-          s.lastEnter = now;
-          s.done = false;
-          s.buf = [];
-          s.events = [];
-          if (i + 1 < rounds.length) setIdx(i + 1);
-          else onFinish(s.records);
-        }
-        return;
+        if (now - (s.lastPunctuation[e.code] ?? -Infinity) < 70) return;
+        s.lastPunctuation[e.code] = now;
       }
 
       if (e.code === "Space") {
@@ -78,9 +120,38 @@ export function Play({ rounds, hint, onFinish, onAbort }: Props) {
       }
 
       s.caps = e.getModifierState("CapsLock");
-      const base = { t: Math.round(performance.now() - s.t0), code: e.code, pos: s.buf.length, shift: e.shiftKey, caps: s.caps };
+      const now = performance.now();
+      const modifier = MODIFIERS.has(e.code);
+      const resumedAfterPause = electron && s.resumeFirstPending;
+      const base: Omit<KeyEvent, "kind"> = {
+        t: Math.max(0, Math.round(now - s.t0 - s.roundPausedMs)),
+        code: e.code, pos: s.buf.length, shift: e.shiftKey, caps: s.caps,
+        ...(electron ? {
+          sessionMs: Math.round(now - sessionStartedAt.current),
+          pauseSeq: s.pauseSeq,
+          ...(resumedAfterPause ? { resumedAfterPause: true, resumeDelayMs: Math.max(0, Math.round(now - s.resumeAt)) } : {}),
+        } : {}),
+      };
+      if (resumedAfterPause) {
+        s.resumeFirstPending = false;
+        setResumeNotice(false);
+        setResumeRecordedDelay(base.resumeDelayMs ?? 0);
+      }
 
-      if (MODIFIERS.has(e.code)) {
+      if (s.done) {
+        if ((e.code === "Enter" || e.code === "NumpadEnter") && now - s.lastEnter > 250) {
+          s.lastEnter = now;
+          if (electron) s.events.push({ ...base, kind: "submit" });
+          s.done = false;
+          s.buf = [];
+          s.events = [];
+          if (i + 1 < rounds.length) setIdx(i + 1);
+          else onFinish(s.records, s.pauses.map((pause) => ({ ...pause })));
+        }
+        return;
+      }
+
+      if (modifier) {
         s.events.push({ ...base, kind: "modifier" });
         return;
       }
@@ -113,7 +184,10 @@ export function Play({ rounds, hint, onFinish, onAbort }: Props) {
       const wantIme = want.lang === "ko";
       const shift = isKeyLetter && !ime && s.caps ? !e.shiftKey : e.shiftKey;
       const modeOk = !isKeyLetter || ime === wantIme;
-      const ok = e.code === want.code && shift === want.shift && modeOk;
+      const koreanTenseKey = ["KeyQ", "KeyW", "KeyE", "KeyR", "KeyT"].includes(want.code);
+      const shiftMatters = want.lang === "en" || want.shift || koreanTenseKey;
+      const shiftOk = !shiftMatters || shift === want.shift;
+      const ok = e.code === want.code && shiftOk && modeOk;
       let err: string | undefined;
       if (!ok) {
         if (e.code !== want.code) err = "다른 키";
@@ -131,7 +205,7 @@ export function Play({ rounds, hint, onFinish, onAbort }: Props) {
         isNext: !!exp[pos + 1] && e.code === exp[pos + 1].code,
         isPrev: pos > 0 && e.code === exp[pos - 1].code,
       });
-      s.buf.push({ ok, code: e.code, shift, ime });
+      s.buf.push({ ok, code: e.code, shift, ime, ...(resumedAfterPause ? { resumedAfterPause: true } : {}) });
       if (!ok) flash(e.code);
 
       if (s.buf.length === exp.length && s.buf.every((x) => x.ok)) {
@@ -145,7 +219,7 @@ export function Play({ rounds, hint, onFinish, onAbort }: Props) {
       window.removeEventListener("keydown", onKey);
       window.clearTimeout(flashTimer);
     };
-  }, [rounds, onFinish]);
+  }, [electron, rounds, onFinish]);
 
   useEffect(() => {
     catcher.current?.focus();
@@ -172,11 +246,17 @@ export function Play({ rounds, hint, onFinish, onAbort }: Props) {
     else if (hasWrong) nextKeys.push("Backspace");
     else if (cursorKey) {
       nextKeys.push(cursorKey.code);
-      if (cursorKey.shift) nextKeys.push(handOf(cursorKey.code) === "L" ? "ShiftRight" : "ShiftLeft");
+      if (cursorKey.shift) nextKeys.push(handOf(cursorKey.code, wristAnchors) === "L" ? "ShiftRight" : "ShiftLeft");
     }
   }
 
   const last = idx + 1 >= rounds.length;
+  const completedText = st.current.records.reduce((sum, record) => sum + record.text.length, 0);
+  const currentText = done ? 0 : buf.length;
+  const displayedNow = paused ? st.current.pauseStartedAt : clockNow;
+  const activeMs = activeElapsedMs(sessionStartedAt.current, displayedNow, st.current.pauses);
+  const liveCpm = activeMs > 0 ? Math.round(((completedText + currentText) * 60000) / activeMs) : 0;
+  const elapsedLabel = `${String(Math.floor(activeMs / 60000)).padStart(2, "0")}:${String(Math.floor(activeMs / 1000) % 60).padStart(2, "0")}`;
   let note = "위 문장과 똑같이 아래 칸에 입력하세요. 첫 키를 누른 시각부터 속도를 재요.";
   if (lastMismatch) note = `한/영 상태가 달라요. 한/영 키를 눌러 ${needMode} 입력으로 바꾼 뒤 Backspace로 지우고 다시 쳐 주세요.`;
   else if (hasWrong) note = "틀린 글자가 있어요. Backspace로 지우고 다시 쳐 보세요.";
@@ -190,24 +270,36 @@ export function Play({ rounds, hint, onFinish, onAbort }: Props) {
             <i key={r.id} className={n < idx ? "past" : n === idx ? "now" : ""} />
           ))}
         </div>
-        <span className="round-no">라운드 {idx + 1} / {rounds.length}</span>
+        <span className="round-no">{electron ? `문장 ${idx + 1} / ${roundCount}` : `라운드 ${idx + 1} / ${rounds.length}`}</span>
+        {electron && <span className="play-clock">경과 {elapsedLabel} · {liveCpm} CPM</span>}
+        {electron && <button className="ghost" onMouseDown={(event) => event.preventDefault()} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") event.preventDefault(); }} onClick={togglePause}>{paused ? "재개" : "일시정지"}</button>}
         <button className="ghost" onClick={onAbort}>그만두기</button>
       </header>
 
       <section className="target" aria-label="따라 칠 문장">
-        <span className="box-label">칠 문장</span>
-        <p className="sentence" lang="ko">
-          {[...sentence.text].map((c, n) => (
-            <span key={n} className={`ch ${!done && n === cursorChar ? "cursor" : ""}`}>{c}</span>
-          ))}
-        </p>
+        {paused ? <div className="pause-mask">일시정지 중</div> : <>
+          <span className="box-label">칠 문장</span>
+          <p className="sentence" lang="ko">
+            {[...sentence.text].map((c, n) => (
+              <span key={n} className={`ch ${!done && n === cursorChar ? "cursor" : ""}`}>{c}</span>
+            ))}
+          </p>
+        </>}
       </section>
 
       <section className={`typebox ${hasWrong ? "has-wrong" : ""} ${done ? "is-done" : ""}`} aria-label="입력 칸">
-        <span className="box-label">
-          내가 친 글자
-          {needMode && !done && <em className="mode-badge">{needMode} 입력</em>}
-        </span>
+        {paused ? <div className="pause-mask">입력 내용이 가려졌어요</div> : <>
+          <span className="box-label">
+            내가 친 글자
+            {needMode && !done && <em className="mode-badge">{needMode} 입력</em>}
+          </span>
+          <p className="typed" lang="ko" aria-live="off">
+            {typed.map((t, n) => (
+              <span key={n} className={t.ok ? "" : "bad"}>{t.text === " " ? "\u00a0" : t.text}</span>
+            ))}
+            {!done && <i className="caret" />}
+          </p>
+        </>}
         <input
           ref={catcher}
           className="catcher"
@@ -220,14 +312,12 @@ export function Play({ rounds, hint, onFinish, onAbort }: Props) {
           onChange={() => {}}
           onBlur={() => requestAnimationFrame(() => catcher.current?.focus())}
         />
-        <p className="typed" lang="ko" aria-live="off">
-          {typed.map((t, n) => (
-            <span key={n} className={t.ok ? "" : "bad"}>{t.text === " " ? "\u00a0" : t.text}</span>
-          ))}
-          {!done && <i className="caret" />}
-        </p>
       </section>
-      <p className={`play-note ${done ? "ready" : ""}`} role="status">{note}</p>
+      <p className={`play-note ${done ? "ready" : ""}`} role="status">
+        {electron && paused ? "일시정지 중이에요. 재개 버튼을 누르면 이어서 칠 수 있어요." : note}
+        {electron && resumeNotice && <b className="resume-note">재개 후 첫 키 지연을 기록해요.</b>}
+        {electron && resumeRecordedDelay !== null && <b className="resume-note">재개 직후 첫 키 지연 {resumeRecordedDelay}ms 기록</b>}
+      </p>
 
       <div className="play-kb">
         <Keyboard next={nextKeys} wrong={wrong} />

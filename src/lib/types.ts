@@ -1,9 +1,12 @@
+
+import type { WristAnchors } from "./keyboard";
+
 export type KeyboardType = "desktop" | "laptop";
 
 export type KeyEvent = {
   t: number;
   code: string;
-  kind: "char" | "backspace" | "modifier" | "other" | "overflow";
+  kind: "char" | "backspace" | "modifier" | "other" | "overflow" | "submit";
   pos: number;
   shift: boolean;
   caps: boolean;
@@ -16,7 +19,13 @@ export type KeyEvent = {
   isNext?: boolean;
   isPrev?: boolean;
   ime?: boolean;
+  sessionMs?: number;
+  pauseSeq?: number;
+  resumedAfterPause?: boolean;
+  resumeDelayMs?: number;
 };
+
+export type PauseInterval = { seq: number; startMs: number; endMs: number };
 
 export type RoundRecord = {
   id: string;
@@ -27,8 +36,15 @@ export type RoundRecord = {
 
 export type Feedback = {
   headline: string;
-  strengths: string[];
-  weaknesses: { title: string; evidence: string; advice: string }[];
+  strengths: { text: string; evidence: string }[];
+  weaknesses: {
+    title: string;
+    confidence: "높음" | "중간" | "낮음";
+    evidence: string;
+    possibleCauses: string[];
+    checkNext: string;
+    advice: string;
+  }[];
   nextStep: string;
 };
 
@@ -37,6 +53,10 @@ export type Session = {
   at: string;
   keyboard: KeyboardType;
   mode?: "normal" | "practice";
+  roundCount?: number;
+  pauses?: PauseInterval[];
+  schemaVersion?: 2;
+  wristAnchors?: WristAnchors;
   rounds: RoundRecord[];
   feedback?: Feedback;
 };

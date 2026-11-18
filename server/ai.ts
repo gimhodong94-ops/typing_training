@@ -68,40 +68,44 @@ async function askGemini(env: Env, system: string, user: string, temperature: nu
 const plain = (value: unknown, max: number) =>
   typeof value === "string" ? value.replace(/[*#`_>]+/g, "").replace(/\s+/g, " ").trim().slice(0, max) : "";
 
-const FEEDBACK_SYSTEM = `당신은 한국어 타자 코치입니다. 사용자의 타자 연습 기록을 요약한 JSON을 보고 약점을 분석해 피드백합니다.
+const FEEDBACK_SYSTEM = `당신은 키보드 타이핑 코치입니다. 연습 기록 요약(JSON)을 보고 약점의 가능한 원인을 해석합니다. 당신의 해석은 확정이 아니라 가설입니다.
 
-지켜야 할 규칙:
-- JSON에 있는 숫자와 사실만 근거로 씁니다. 없는 값은 추측하거나 지어내지 않습니다.
-- 표본이 적은 항목(n이 5 미만이거나 라운드가 10 미만)은 단정하지 말고 표본이 적다고 밝힙니다.
-- 모든 문장은 해요체입니다. 마크다운 기호(별표, 샵, 목록 기호), 이모지, 영어 약어를 쓰지 않습니다.
-- 키 이름은 데이터에 적힌 그대로 씁니다. 예: U(ㅕ), ⇧A(ㅁ). 알파벳을 한글로 음역하지 않습니다. 유, 아이, 비 같은 표기는 금지입니다.
-- 손과 손가락은 데이터의 finger, expectedFinger, typedFinger에 적힌 것만 말합니다. 직접 짐작하지 않습니다.
-- 칭찬은 데이터로 확인되는 것만 최대 2개. 빈말은 쓰지 않습니다.
-- 약점은 영향이 큰 순서로 최대 3개. 오타가 거의 없으면 약점을 1~2개만 쓰고 억지로 채우지 않습니다.
-- 시도 횟수 n이 5 미만인 키는 약점 목록에 넣지 않습니다. 필요하면 nextStep에서 표본이 적다고만 언급합니다.
-- advice는 오늘 바로 해볼 수 있는 구체적 행동입니다. 어느 손가락으로 칠지, 손을 어디에 두는지, 어떻게 반복 연습하는지처럼 씁니다.
-
-데이터 읽는 법:
-- 한글은 두벌식, 영문은 QWERTY입니다. 한글 자모도 같은 키 위치로 칩니다. 키 이름 괄호 안이 그 키의 한글 자모입니다.
-- typoPairs의 expected는 눌러야 할 키, typed는 실제로 누른 키입니다. dist는 두 키 사이 거리(키 한 칸 단위), dir은 눌러야 할 키 기준 실제 키의 방향입니다.
-- typoTendency의 meanDx는 오른쪽이 +, meanDy는 아래쪽이 +입니다. adjacentPct는 틀린 키가 눌러야 할 키 바로 옆 키였던 비율, repeatPrevPct는 방금 친 키를 또 누른 비율, pressedNextPct는 다음에 칠 키를 먼저 누른 비율입니다.
-- errorKinds는 오입력 종류별 횟수입니다. "한/영 상태"는 키는 맞았지만 한글/영문 입력 상태가 문장과 달랐다는 뜻입니다. keys/min은 분당 타수입니다.
-- handTransitionMs는 같은 손으로 이어 칠 때와 두 손을 번갈아 칠 때 키 사이 시간(ms)입니다.
-- byTag의 tag는 문장 특성이고 kpm이 낮을수록 그 특성의 문장에서 느렸다는 뜻입니다.
+규칙:
+- 숫자는 JSON에 있는 값만 인용합니다. 배수, 평균 비교, 새 비율을 직접 계산하지 않습니다.
+- JSON의 metricDefinitions에 적힌 뜻대로만 지표를 해석합니다.
+- 각 약점에 근거 필드 이름과 확신도(높음, 중간, 낮음)를 씁니다.
+- 원인을 하나로 단정하지 않습니다. 가능한 원인을 2개 이상 쓰고, 어느 원인인지 가릴 수 있는 다음 연습 방법을 함께 씁니다. 예: 목표 키를 빼먹었는지, 다음 키를 먼저 눌렀는지는 천천히 쳐 보면 구분됩니다.
+- 표본 수 n이 5 미만인 항목은 근거로 쓰지 않습니다. n이 10 미만이면 표본이 적다고 밝힙니다.
+- Shift가 필요한 글자의 손가락은 단정하지 않습니다. finger 정보가 없는 항목에 손가락 이름을 붙이지 않습니다.
+- 겹모음 오타는 키와 Shift 상태가 함께 틀렸을 때만 다룹니다. errorKinds의 항목 이름을 그대로 인용합니다.
+- 키 이름은 데이터 그대로 씁니다. 예: U(ㅕ), ",", 스페이스. 알파벳을 한글로 음역하지 않습니다.
+- CPM, IKI 같은 지표 약어는 쓰지 않습니다.
+- 칭찬은 근거 필드가 있는 것만 최대 2개 씁니다.
+- 약점은 영향이 큰 순서로 최대 3개입니다. 근거가 약하면 1~2개만 씁니다.
+- 해요체로 쓰고, 마크다운 기호와 이모지는 쓰지 않습니다.
 
 반드시 아래 JSON 형식으로만 답합니다.
-{"headline":"한 줄 총평(50자 이내)","strengths":["잘한 점"],"weaknesses":[{"title":"약점 제목(15자 이내)","evidence":"근거 숫자를 포함한 설명 1~2문장","advice":"구체적 행동 1~2문장"}],"nextStep":"다음 연습에서 집중할 한 가지(1문장)"}`;
+{"headline":"한 줄 총평(50자 이내)","strengths":[{"text":"잘한 점","evidence":"필드 이름"}],"weaknesses":[{"title":"약점 제목(15자 이내)","confidence":"높음|중간|낮음","evidence":"필드 이름과 값","possibleCauses":["원인 가설 1","원인 가설 2"],"checkNext":"다음 연습에서 원인을 가리는 방법","advice":"오늘 바로 해볼 구체적 행동"}],"nextStep":"다음 연습에서 집중할 한 가지(1문장)"}`;
 
 async function feedback(summary: unknown, env: Env): Promise<ApiResult> {
   const raw = (await askGemini(env, FEEDBACK_SYSTEM, `연습 기록 요약:\n${JSON.stringify(summary)}`, 0.4)) as any;
   const weaknesses = (Array.isArray(raw?.weaknesses) ? raw.weaknesses : []).slice(0, 3)
-    .map((w: any) => ({ title: plain(w?.title, 30), evidence: plain(w?.evidence, 300), advice: plain(w?.advice, 300) }))
-    .filter((w: any) => w.title && w.advice);
+    .map((w: any) => ({
+      title: plain(w?.title, 15),
+      confidence: (["높음", "중간", "낮음"].includes(w?.confidence) ? w.confidence : "낮음") as "높음" | "중간" | "낮음",
+      evidence: plain(w?.evidence, 300),
+      possibleCauses: (Array.isArray(w?.possibleCauses) ? w.possibleCauses : []).slice(0, 4).map((cause: unknown) => plain(cause, 200)).filter(Boolean),
+      checkNext: plain(w?.checkNext, 250),
+      advice: plain(w?.advice, 250),
+    }))
+    .filter((w: any) => w.title && w.evidence && w.possibleCauses.length >= 2 && w.checkNext && w.advice);
   const result = {
-    headline: plain(raw?.headline, 120),
-    strengths: (Array.isArray(raw?.strengths) ? raw.strengths : []).slice(0, 2).map((s: unknown) => plain(s, 200)).filter(Boolean),
+    headline: plain(raw?.headline, 50),
+    strengths: (Array.isArray(raw?.strengths) ? raw.strengths : []).slice(0, 2)
+      .map((s: any) => ({ text: plain(s?.text, 160), evidence: plain(s?.evidence, 120) }))
+      .filter((s: any) => s.text && s.evidence),
     weaknesses,
-    nextStep: plain(raw?.nextStep, 200),
+    nextStep: plain(raw?.nextStep, 250),
   };
   if (!result.headline && !weaknesses.length) throw new ApiError(502, "AI 답변 형식이 올바르지 않았어요. 다시 시도해 주세요.");
   return { status: 200, body: { feedback: result } };

@@ -3,6 +3,7 @@ import { Keyboard } from "./Keyboard";
 import { requestFeedback, requestPractice } from "../lib/ai";
 import { PRACTICE_COUNT, meanLength, sentences as allSentences, type Sentence } from "../lib/sentences";
 import { aiSummary, analyze } from "../lib/stats";
+import { sessionRoundCount } from "../lib/sessionData";
 import type { Feedback, Session } from "../lib/types";
 
 const fmt = (v: number, d = 0) => v.toFixed(d);
@@ -22,7 +23,10 @@ export function Result({ session, onBack, onFeedback, onPractice }: Props) {
   const [busy, setBusy] = useState<"" | "feedback" | "practice">("");
   const [aiError, setAiError] = useState("");
   const feedback = session.feedback;
-  const summaryText = useMemo(() => JSON.stringify(aiSummary(session, a), null, 1), [session, a]);
+  const summaryText = useMemo(() => {
+    const data = aiSummary(session, a);
+    return JSON.stringify(window.typingCoach ? { ...data, pauses: a.pauseMetrics } : data, null, 1);
+  }, [session, a]);
 
   const heat: Record<string, number> = {};
   const tip: Record<string, string> = {};
@@ -41,7 +45,10 @@ export function Result({ session, onBack, onFeedback, onPractice }: Props) {
   const maxKpm = Math.max(...a.rounds.map((r) => r.kpm), 1);
   const avgKpm = a.totals.kpm;
   const kinds = Object.entries(a.byKind).sort((x, y) => y[1] - x[1]);
-  const summary = useMemo(() => aiSummary(session, a), [session, a]);
+  const summary = useMemo(() => {
+    const data = aiSummary(session, a);
+    return window.typingCoach ? { ...data, pauses: a.pauseMetrics } : data;
+  }, [session, a]);
   const askFeedback = async () => {
     setBusy("feedback");
     setAiError("");
@@ -80,10 +87,15 @@ export function Result({ session, onBack, onFeedback, onPractice }: Props) {
     <main className="page result">
       <header className="result-head">
         <div>
-          <h1>{a.rounds.length}라운드 {session.mode === "practice" ? "약점 연습 " : ""}결과</h1>
+          <h1>{window.typingCoach ? `${sessionRoundCount(session)}문장` : `${a.rounds.length}라운드`} {session.mode === "practice" ? "약점 연습 " : ""}결과</h1>
           <p className="lead">
             평균 <b>{fmt(a.totals.kpm)}타/분</b>({fmt(a.totals.cpm)}자/분), 정확도 <b>{fmt(a.totals.acc, 1)}%</b>, 첫 입력까지 평균 <b>{sec(a.totals.first)}</b>.
           </p>
+          {window.typingCoach && <p className="note pause-summary">
+            일시정지 {a.pauseMetrics.count}회 · 총 {sec(a.pauseMetrics.totalMs)}
+            {a.pauseMetrics.count > 0 ? ` · 정지 전 ${fmt(a.pauseMetrics.prePauseCpm)} CPM · 정지 후 ${fmt(a.pauseMetrics.postPauseCpm)} CPM` : ""}
+            {a.pauseMetrics.resumeDelaysMs.length > 0 ? ` · 재개 후 첫 키 지연 평균 ${sec(a.pauseMetrics.resumeDelaysMs.reduce((sum, ms) => sum + ms, 0) / a.pauseMetrics.resumeDelaysMs.length)}` : ""}
+          </p>}
         </div>
         <div className="actions">
           <button className="ghost" onClick={download}>기록 내려받기</button>
@@ -119,13 +131,15 @@ export function Result({ session, onBack, onFeedback, onPractice }: Props) {
           <div className="feedback">
             {feedback.headline && <p className="headline">{feedback.headline}</p>}
             {feedback.strengths.length > 0 && (
-              <ul className="strengths">{feedback.strengths.map((t) => <li key={t}>{t}</li>)}</ul>
+              <ul className="strengths">{feedback.strengths.map((s, n) => <li key={s.text + n}><b>{s.text}</b>{s.evidence && <small> 근거: {s.evidence}</small>}</li>)}</ul>
             )}
             <div className="weak-list">
               {feedback.weaknesses.map((w, n) => (
                 <article key={w.title} className="weak">
-                  <h3><span>{n + 1}</span>{w.title}</h3>
-                  {w.evidence && <p>{w.evidence}</p>}
+                  <h3><span>{n + 1}</span>{w.title}<em className="confidence">확신도 {w.confidence}</em></h3>
+                  {w.evidence && <p><b>근거</b> {w.evidence}</p>}
+                  {w.possibleCauses.length > 0 && <p><b>가능한 원인</b> {w.possibleCauses.join(" 또는 ")}</p>}
+                  {w.checkNext && <p><b>확인 연습</b> {w.checkNext}</p>}
                   <p className="advice">{w.advice}</p>
                 </article>
               ))}

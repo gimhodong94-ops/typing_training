@@ -71,6 +71,28 @@ button { font: inherit; color: inherit; cursor: pointer; }
   border: 1px solid var(--line); border-radius: 8px; background: var(--paper); font-size: 14px; text-align: left;
 }
 .history button:hover { border-color: var(--cobalt); background: var(--cobalt-bg); }
+.api-settings { width: 100%; padding: 14px 16px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
+.api-settings summary { font-size: 15px; font-weight: 700; color: var(--ink); }
+.api-settings-body { display: grid; gap: 10px; padding-top: 8px; }
+.api-settings-body .note { margin: 0; }
+.api-key-input { width: 100%; padding: 11px 12px; border: 1px solid var(--line); border-radius: 8px; background: #fff; color: var(--ink); font: inherit; }
+.api-key-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.api-key-actions .primary { margin: 0; }
+.key-status { margin-left: auto; color: var(--ink-soft); font-size: 13px; }
+.session-check { display: grid; gap: 3px; padding: 12px 15px; border: 1px solid var(--line); border-radius: 9px; background: var(--panel); color: var(--ink-soft); font-size: 13px; font-variant-numeric: tabular-nums; }
+.session-check b { color: var(--ink); }
+.wrist-settings { margin-top: 4px; }
+.wrist-setup { display: grid; gap: 8px; }
+.wrist-board { position: relative; width: 100%; aspect-ratio: 15 / 7; overflow: hidden; border: 1px solid var(--line); border-radius: 10px; background: #f7f9fb; cursor: crosshair; touch-action: none; user-select: none; }
+.wrist-board-keys { position: absolute; inset: 0 0 auto; height: 72.86%; pointer-events: none; }
+.wrist-board-keys .kb { height: 100%; aspect-ratio: auto; }
+.wrist-markers { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.wrist-markers line { stroke: #a8b4c1; stroke-width: 0.035; stroke-dasharray: 0.12 0.1; }
+.wrist-markers circle { stroke: #fff; stroke-width: 0.08; }
+.wrist-markers circle.left { fill: #1f5eff; }
+.wrist-markers circle.right { fill: #17784f; }
+.wrist-markers text { fill: var(--ink); font-size: 0.34px; text-anchor: middle; font-weight: 700; }
+.wrist-cursor { position: absolute; width: 2.6%; aspect-ratio: 1; border: 2px solid var(--ink); border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; opacity: 0.7; }
 
 /* 키보드 */
 .kb { position: relative; width: 100%; aspect-ratio: 15 / 5.1; container-type: inline-size; user-select: none; }
@@ -92,6 +114,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .progress i.past { background: var(--ink); }
 .progress i.now { background: var(--cobalt); }
 .round-no { font-size: 14px; font-weight: 600; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.play-clock { color: var(--ink-soft); font-size: 13px; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .target, .typebox { position: relative; margin-top: 28px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 30px 36px 24px; }
 .target { margin-top: 48px; }
 .typebox { margin-top: 14px; border: 2px solid var(--ink); min-height: 120px; transition: border-color 0.12s, background 0.12s; }
@@ -114,6 +137,8 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .catcher { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; border: 0; padding: 0; cursor: text; }
 .play-note { margin: 14px 0 28px; min-height: 1.7em; color: var(--ink-soft); font-size: 15px; }
 .play-note.ready { color: var(--ok); font-weight: 700; }
+.pause-mask { min-height: 2.3em; display: grid; place-items: center; color: var(--ink-soft); font-size: 20px; font-weight: 700; }
+.resume-note { display: inline-block; margin-left: 12px; padding: 2px 8px; border-radius: 6px; background: var(--cobalt-bg); color: var(--cobalt); font-size: 13px; }
 .play-kb { margin-top: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px; }
 
 /* 결과 화면 */
@@ -168,6 +193,7 @@ pre { max-height: 320px; overflow: auto; padding: 14px; background: var(--paper)
 .weak { padding: 16px 18px; border: 1px solid var(--line); border-left: 4px solid var(--err); border-radius: 10px; background: var(--paper); }
 .weak h3 { margin: 0 0 6px; font-size: 16px; display: flex; align-items: center; gap: 8px; }
 .weak h3 span { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--err); color: #fff; font-size: 13px; }
+.confidence { margin-left: auto; padding: 2px 7px; border-radius: 5px; background: #fff; color: var(--ink-soft); font-size: 12px; font-style: normal; font-weight: 600; white-space: nowrap; }
 .weak p { margin: 0 0 6px; font-size: 15px; }
 .weak .advice { color: var(--ink); font-weight: 600; }
 .next-step { margin: 0; padding: 12px 16px; border-radius: 10px; background: var(--cobalt-bg); font-size: 15px; }

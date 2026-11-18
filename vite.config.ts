@@ -34,6 +34,7 @@ function aiApi(): Plugin {
 }
 
 export default defineConfig({
+  base: "./",
   plugins: [react(), aiApi()],
   server: { host: "0.0.0.0", port: 5173, allowedHosts: true },
 });

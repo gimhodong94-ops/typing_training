@@ -1,4 +1,5 @@
-import { KEYPOS, direction, fingerOf, handOf, keyLabel, keysForText } from "./keyboard";
+import { DEFAULT_WRISTS, KEYPOS, direction, fingerOf, handOf, keyLabel, keysForText } from "./keyboard";
+import { calculatePauseMetrics, crossesPauseBoundary } from "./pauseMetrics";
 import type { RoundRecord, Session } from "./types";
 
 export type RoundStat = {
@@ -86,6 +87,8 @@ function summarizeRound(r: RoundRecord, i: number): RoundStat {
 }
 
 export function analyze(session: Session) {
+  const wrists = session.wristAnchors ?? DEFAULT_WRISTS;
+  const pauseMetrics = calculatePauseMetrics(session);
   const rounds = session.rounds.map(summarizeRound);
   const events = session.rounds.flatMap((r) => r.events);
   const presses = rounds.reduce((s, r) => s + r.presses, 0);
@@ -115,10 +118,11 @@ export function analyze(session: Session) {
       k.n++;
       if (!e.ok) k.err++;
       const prev = r.events[idx - 1];
-      if (e.ok && prev && prev.kind === "char" && prev.ok && prev.exp && e.t - prev.t <= 2500) {
+      const pauseBoundary = !!prev && crossesPauseBoundary(prev, e);
+      if (e.ok && prev && prev.kind === "char" && prev.ok && prev.exp && !pauseBoundary && e.t - prev.t <= 2500) {
         k.msList.push(e.t - prev.t);
-        const a = handOf(prev.exp);
-        const b = handOf(e.exp);
+        const a = handOf(prev.exp, wrists);
+        const b = handOf(e.exp, wrists);
         if (a && b && prev.exp !== e.exp) (a === b ? hand.same : hand.alt).push(e.t - prev.t);
       }
     }),
@@ -126,6 +130,30 @@ export function analyze(session: Session) {
 
   const pairMap = new Map<string, { exp: string; act: string; n: number; dist: number[]; dx: number; dy: number }>();
   const other = errEvents.filter((e) => e.kind === "char" && e.exp && e.exp !== e.code);
+  const handTypos = {
+    left: other.filter((e) => handOf(e.exp!, wrists) === "L"),
+    right: other.filter((e) => handOf(e.exp!, wrists) === "R"),
+  };
+  const towardWristPct = (rows: typeof other, wrist: { x: number; y: number }) => pct(rows.filter((e) => {
+    const target = KEYPOS[e.exp!];
+    const dx = e.dx ?? 0;
+    const dy = e.dy ?? 0;
+    return dx * (wrist.x - target.x) + dy * (wrist.y - target.y) > 0;
+  }).length, rows.length);
+  const typoByHand = {
+    left: {
+      n: handTypos.left.length,
+      meanDx: mean(handTypos.left.map((e) => e.dx ?? 0)),
+      meanDy: mean(handTypos.left.map((e) => e.dy ?? 0)),
+      towardWristPct: towardWristPct(handTypos.left, wrists.left),
+    },
+    right: {
+      n: handTypos.right.length,
+      meanDx: mean(handTypos.right.map((e) => e.dx ?? 0)),
+      meanDy: mean(handTypos.right.map((e) => e.dy ?? 0)),
+      towardWristPct: towardWristPct(handTypos.right, wrists.right),
+    },
+  };
   other.forEach((e) => {
     const id = `${e.exp}>${e.code}`;
     const p = pairMap.get(id) ?? { exp: e.exp!, act: e.code, n: 0, dist: [], dx: 0, dy: 0 };
@@ -150,7 +178,7 @@ export function analyze(session: Session) {
     adjacent: pct(withVec.filter((e) => Math.hypot(e.dx!, e.dy!) <= 1.6).length, withVec.length),
     prev: pct(other.filter((e) => e.isPrev).length, other.length),
     next: pct(other.filter((e) => e.isNext).length, other.length),
-    sameHand: pct(other.filter((e) => handOf(e.code) && handOf(e.code) === handOf(e.exp!)).length, other.length),
+    sameHand: pct(other.filter((e) => handOf(e.code, wrists) && handOf(e.code, wrists) === handOf(e.exp!, wrists)).length, other.length),
   };
 
   const allCorr = rounds.flatMap((r) => r.corrections);
@@ -202,6 +230,12 @@ export function analyze(session: Session) {
     if (dirStat.next >= 15) insights.push(`오타의 ${dirStat.next.toFixed(0)}%는 바로 다음에 칠 키를 먼저 누른 경우예요. 손이 생각보다 앞서가요.`);
     if (dirStat.prev >= 15) insights.push(`오타의 ${dirStat.prev.toFixed(0)}%는 방금 친 키를 한 번 더 누른 경우예요.`);
   }
+  for (const [hand, stat] of [["왼손", typoByHand.left], ["오른손", typoByHand.right]] as const) {
+    if (stat.n >= 3 && stat.towardWristPct >= 60)
+      insights.push(`${hand}로 칠 키 오타 ${stat.n}번 중 ${stat.towardWristPct.toFixed(0)}%가 손목 쪽으로 치우쳤어요.`);
+    else if (stat.n >= 3 && stat.towardWristPct <= 30)
+      insights.push(`${hand}로 칠 키 오타 ${stat.n}번 중 대부분이 손목에서 먼 쪽으로 치우쳤어요.`);
+  }
   const shiftErr = (byKind["Shift 빠뜨림"] ?? 0) + (byKind["Shift 잘못 누름"] ?? 0);
   if (shiftErr >= 2) insights.push(`Shift 관련 오입력이 ${shiftErr}번 있었어요.`);
   if (byKind["한/영 상태"]) insights.push(`한/영 상태가 맞지 않아 틀린 입력이 ${byKind["한/영 상태"]}번 있었어요. 한글과 영문이 섞인 문장에서 전환을 놓치는지 보세요.`);
@@ -216,7 +250,7 @@ export function analyze(session: Session) {
   const weakTag = tags.filter((t) => t.kpm < base * 0.93).sort((a, b) => a.kpm - b.kpm)[0];
   if (weakTag) insights.push(`'${weakTag.tag}' 문장에서 평균보다 ${Math.round((1 - weakTag.kpm / base) * 100)}% 느렸어요.`);
 
-  return { rounds, totals, byKind, keyStats, pairs, dirStat, corr, tags, slowWords, weakKeys, slowKeys, hand: { same: mean(hand.same), alt: mean(hand.alt) }, insights };
+  return { rounds, totals, pauseMetrics, byKind, keyStats, pairs, dirStat, typoByHand, corr, tags, slowWords, weakKeys, slowKeys, hand: { same: mean(hand.same), alt: mean(hand.alt) }, insights };
 }
 
 export type Analysis = ReturnType<typeof analyze>;
@@ -241,9 +275,28 @@ export function aiSummary(session: Session, a: Analysis) {
       n: a.dirStat.n, meanDx: r1(a.dirStat.mx), meanDy: r1(a.dirStat.my), adjacentPct: Math.round(a.dirStat.adjacent),
       repeatPrevPct: Math.round(a.dirStat.prev), pressedNextPct: Math.round(a.dirStat.next),
     },
+    typoDirectionByHand: a.typoByHand,
+    wristAnchors: session.wristAnchors,
     correction: { count: a.corr.n, meanMs: Math.round(a.corr.mean), reErrors: a.corr.reErr },
     handTransitionMs: { sameHand: Math.round(a.hand.same), alternate: Math.round(a.hand.alt) },
     slowWords: a.slowWords.map((w) => ({ word: w.word, kpm: Math.round(w.kpm) })),
     byTag: a.tags.map((t) => ({ tag: t.tag, n: t.n, kpm: Math.round(t.kpm), errPct: r1(t.errRate) })),
+    metricDefinitions: {
+      rounds: "완료한 문장 수입니다. 문장 하나가 한 라운드입니다.",
+      avgKeysPerMin: "전체 목표 키 수를 각 문장의 첫 입력부터 마지막 입력까지의 시간 합으로 나눈 분당 키 수입니다. 일시정지 시간은 포함하지 않습니다.",
+      accuracyPct: "기록된 입력 시도 중 오입력이 아닌 시도의 비율입니다.",
+      avgFirstKeyMs: "문장이 표시된 뒤 첫 키 이벤트까지 걸린 시간의 평균입니다. 일시정지 시간은 제외합니다.",
+      errorKinds: "기록된 오입력 종류별 횟수입니다.",
+      weakKeys: "각 눌러야 할 키에 대한 시도 횟수 n과 오입력 비율입니다. finger는 기본 키 배정 정보입니다.",
+      slowKeys: "키 입력 사이 시간으로 계산한 느린 키 순위입니다. 일시정지 경계를 가로지르는 간격은 제외합니다.",
+      typoPairs: "목표 키와 실제로 누른 키의 쌍, 횟수, 키 간 거리와 방향입니다.",
+      typoTendency: "오입력 키가 목표 키에서 벗어난 방향과 이웃 키·이전 키·다음 키 관련 오타 비율입니다.",
+      typoDirectionByHand: "목표 키와 가까운 손목 기준점으로 나눈 오타입니다. n은 오타 수, towardWristPct는 해당 손목 방향으로 벗어난 오타 비율입니다.",
+      correction: "오타 후 입력을 바로잡는 데 걸린 시간과 재오타 횟수입니다.",
+      handTransitionMs: "같은 손 키 사이와 양손 번갈아 입력한 키 사이의 시간입니다. 일시정지 경계 간격은 제외합니다.",
+      slowWords: "어절별 목표 키 입력 속도입니다.",
+      byTag: "문장 특성별 문장 수, 키 입력 속도와 오입력 비율입니다.",
+      pauses: "count는 일시정지 횟수, totalMs는 정지 시간 합, prePauseCpm/postPauseCpm은 첫 정지 전과 정지 후의 문자 입력 속도, resumeDelaysMs는 재개 뒤 첫 키까지 걸린 시간 목록입니다.",
+    },
   };
 }

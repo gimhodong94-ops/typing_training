@@ -32,6 +32,12 @@ export const KEYPOS: Record<string, { x: number; y: number }> = Object.fromEntri
   KEYS.map((k) => [k.code, { x: k.x + k.w / 2, y: k.y }]),
 );
 
+export type WristAnchors = { left: { x: number; y: number }; right: { x: number; y: number } };
+export const DEFAULT_WRISTS: WristAnchors = {
+  left: { x: 4.25, y: 5.65 },
+  right: { x: 9.5, y: 5.65 },
+};
+
 export const MODIFIERS = new Set(["ShiftLeft", "ShiftRight"]);
 const LEFT_HAND = new Set(
   ["Backquote", "Digit1", "Digit2", "Digit3", "Digit4", "Digit5", "Tab", "CapsLock",
@@ -42,8 +48,32 @@ const RIGHT_HAND = new Set(
     "Backslash", "Semicolon", "Quote", "Enter", "Comma", "Period", "Slash",
     ..."YUIOPHJKLNM".split("").map((c) => `Key${c}`)],
 );
-export const handOf = (code: string): "L" | "R" | null =>
-  LEFT_HAND.has(code) ? "L" : RIGHT_HAND.has(code) ? "R" : null;
+export const handOf = (code: string, wrists: WristAnchors = DEFAULT_WRISTS): "L" | "R" | null => {
+  if (code === "Space") return null;
+  const pos = KEYPOS[code];
+  if (!pos) return null;
+  const left = Math.hypot(pos.x - wrists.left.x, pos.y - wrists.left.y);
+  const right = Math.hypot(pos.x - wrists.right.x, pos.y - wrists.right.y);
+  if (Math.abs(left - right) < 0.01) return LEFT_HAND.has(code) ? "L" : RIGHT_HAND.has(code) ? "R" : null;
+  return left < right ? "L" : "R";
+};
+
+const WRISTS_KEY = "typing-coach-wrist-anchors-v1";
+export function loadWristAnchors(): WristAnchors {
+  try {
+    const value = JSON.parse(localStorage.getItem(WRISTS_KEY) ?? "null") as WristAnchors | null;
+    if (value && [value.left?.x, value.left?.y, value.right?.x, value.right?.y].every(Number.isFinite)) return value;
+  } catch { /* use the standard estimate */ }
+  return DEFAULT_WRISTS;
+}
+
+export function saveWristAnchors(value: WristAnchors) {
+  localStorage.setItem(WRISTS_KEY, JSON.stringify(value));
+}
+
+export function hasSavedWristAnchors() {
+  return localStorage.getItem(WRISTS_KEY) !== null;
+}
 const FINGERS: [string, string[]][] = [
   ["왼손 새끼손가락", ["Backquote", "Digit1", "KeyQ", "KeyA", "KeyZ", "Tab", "CapsLock", "ShiftLeft"]],
   ["왼손 약지", ["Digit2", "KeyW", "KeyS", "KeyX"]],
