@@ -59,6 +59,9 @@ export const handOf = (code: string, wrists: WristAnchors = DEFAULT_WRISTS): "L"
 };
 
 const WRISTS_KEY = "typing-coach-wrist-anchors-v1";
+const DZ_KEY = "typing-coach-keyboard-dz-mm-v1";
+export const DEFAULT_DZ_MM = 25;
+export const FINGER_MAP_VERSION = "qwerty-standard-v1";
 export function loadWristAnchors(): WristAnchors {
   try {
     const value = JSON.parse(localStorage.getItem(WRISTS_KEY) ?? "null") as WristAnchors | null;
@@ -69,6 +72,17 @@ export function loadWristAnchors(): WristAnchors {
 
 export function saveWristAnchors(value: WristAnchors) {
   localStorage.setItem(WRISTS_KEY, JSON.stringify(value));
+}
+
+export function loadKeyboardDz(): number {
+  const raw = localStorage.getItem(DZ_KEY);
+  if (raw === null) return DEFAULT_DZ_MM;
+  const value = Number(raw);
+  return Number.isFinite(value) && value >= 0 && value <= 80 ? value : DEFAULT_DZ_MM;
+}
+
+export function saveKeyboardDz(value: number) {
+  localStorage.setItem(DZ_KEY, String(Math.max(0, Math.min(80, value))));
 }
 
 export function hasSavedWristAnchors() {
@@ -152,6 +166,11 @@ export function direction(dx: number, dy: number): string {
 }
 
 const SHIFT_JAMO: Record<string, string> = { q: "ㅃ", w: "ㅉ", e: "ㄸ", r: "ㄲ", t: "ㅆ", o: "ㅒ", p: "ㅖ" };
+const SHIFT_SENSITIVE_CODES = new Set(["KeyQ", "KeyW", "KeyE", "KeyR", "KeyT", "KeyO", "KeyP"]);
+
+export function isShiftMismatch(code: string, lang: "ko" | "en", targetShift: boolean, typedShift: boolean) {
+  return (lang === "en" || SHIFT_SENSITIVE_CODES.has(code)) && targetShift !== typedShift;
+}
 
 export function jamoFor(code: string, shift: boolean): string {
   const l = code.slice(3).toLowerCase();

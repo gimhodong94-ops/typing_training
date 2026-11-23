@@ -14,6 +14,7 @@ export function loadSessions(): Session[] {
 }
 
 export function saveSession(session: Session) {
+  const { isLocalStorageOnly: _isLocalStorageOnly, ...persistedSession } = session;
   let raw: Session[];
   try {
     raw = JSON.parse(localStorage.getItem(KEY) ?? "[]") as Session[];
@@ -21,11 +22,11 @@ export function saveSession(session: Session) {
     raw = [];
   }
   const existing = raw.find((s) => s.id === session.id);
-  const valueToSave = session.schemaVersion === 2
-    ? session
-    : existing
-      ? { ...existing, ...(session.feedback === undefined ? {} : { feedback: session.feedback }) }
-      : session;
+  const valueToSave = existing
+    ? existing.schemaVersion === undefined
+      ? { ...existing, ...(persistedSession.feedback === undefined ? {} : { feedback: persistedSession.feedback }), ...(persistedSession.aiAnalysis === undefined ? {} : { aiAnalysis: persistedSession.aiAnalysis }), ...(persistedSession.analysis === undefined ? {} : { analysis: persistedSession.analysis }), ...(persistedSession.answers === undefined ? {} : { answers: persistedSession.answers }), ...(persistedSession.noteAnswers === undefined ? {} : { noteAnswers: persistedSession.noteAnswers }) }
+      : { ...existing, ...persistedSession }
+    : persistedSession;
   let list = [valueToSave, ...raw.filter((s) => s.id !== session.id)].slice(0, MAX_SESSIONS);
   while (list.length) {
     try {

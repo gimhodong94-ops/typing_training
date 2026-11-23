@@ -1,6 +1,8 @@
 export const SYMBOLS = "`~!@#$%^&*()-_=+[]{}\\|;:'\",.<>/?";
-export const MAX_LEN_KO = 100;
-export const MAX_LEN_EN = 150;
+import thresholds from "../config/thresholds.json";
+
+export const MAX_LEN_KO = thresholds.sentenceLength.maxKoreanDominant;
+export const MAX_LEN_EN = thresholds.sentenceLength.maxEnglishDominant;
 export const TAG_ORDER = [
   "받침많음", "겹받침", "복합모음", "쌍자음", "어절많음", "숫자포함",
   "영문포함", "기호포함", "긴문장", "짧은문장", "줄바꿈포함",
@@ -16,6 +18,12 @@ const isAscii = (ch: string) => ch.charCodeAt(0) < 128;
 const isLetter = (ch: string) => isAscii(ch) && /[A-Za-z]/.test(ch);
 const isDigit = (ch: string) => ch >= "0" && ch <= "9";
 
+export function sentenceLengthLimit(text: string): number {
+  const korean = [...text].filter(isHangul).length;
+  const english = [...text].filter(isLetter).length;
+  return korean >= english || korean + english === 0 ? MAX_LEN_KO : MAX_LEN_EN;
+}
+
 export function isAllowedChar(ch: string): boolean {
   return isHangul(ch) || ch === " " || SYMBOLS.includes(ch) || isLetter(ch) || isDigit(ch);
 }
@@ -24,8 +32,8 @@ export function checkText(text: string): string[] {
   const errors: string[] = [];
   const bad = [...new Set([...text].filter((ch) => !isAllowedChar(ch)))];
   if (bad.length) errors.push(`허용되지 않는 문자: ${bad.join("")}`);
-  const limit = [...text].some(isLetter) ? MAX_LEN_EN : MAX_LEN_KO;
-  if (text.length < 5 || text.length > limit) errors.push(`길이 ${text.length}자 (허용 5~${limit}자)`);
+  const limit = sentenceLengthLimit(text);
+  if (text.length < thresholds.sentenceLength.minimum || text.length > limit) errors.push(`길이 ${text.length}자 (허용 ${thresholds.sentenceLength.minimum}~${limit}자)`);
   return errors;
 }
 

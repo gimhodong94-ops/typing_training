@@ -1,7 +1,7 @@
 {
   "name": "typing-training",
   "private": true,
-  "version": "0.1.5",
+  "version": "0.1.24",
   "type": "module",
   "main": "desktop-dist/main.cjs",
   "scripts": {
@@ -30,6 +30,7 @@
   "build": {
     "appId": "kr.gwaze.typingcoach",
     "productName": "AI 타자 코치",
+    "artifactName": "AI 타자 코치 Setup ${version}.${ext}",
     "files": [
       "dist/**/*",
       "desktop-dist/main.cjs",

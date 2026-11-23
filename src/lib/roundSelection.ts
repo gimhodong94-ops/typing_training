@@ -1,12 +1,13 @@
 import type { Sentence } from "./sentences";
 import type { Session } from "./types";
+import { sentenceLengthLimit } from "../../shared/rules";
+import thresholds from "../../config/thresholds.json";
 
 export const MAX_ROUND_ATTEMPTS = 1000;
 export const ROUND_TOLERANCE = 0.3;
 
 export function isSentenceLengthAllowed(text: string) {
-  const limit = /[\uAC00-\uD7A3]/.test(text) ? 100 : 150;
-  return text.length <= limit;
+  return text.length >= thresholds.sentenceLength.minimum && text.length <= sentenceLengthLimit(text);
 }
 
 export function sentenceUseCounts(sessions: Session[]) {
@@ -29,6 +30,7 @@ export type RoundSelection = {
   withinRange: boolean;
   usedFallback: boolean;
   error?: string;
+  excludedByLength: number;
 };
 
 const totalLength = (rows: Sentence[]) => rows.reduce((sum, row) => sum + row.text.length, 0);
@@ -71,6 +73,7 @@ export function createRoundSelection(
     return {
       rounds: [], count, averageLength, targetTotal, minimumTotal, maximumTotal,
       totalLength: 0, attempts: 0, withinRange: false, usedFallback: false,
+      excludedByLength: rows.filter((row) => !isSentenceLengthAllowed(row.text)).length,
       error: `길이 기준을 통과한 문장이 ${eligible.length}개라 ${count}라운드를 만들 수 없어요.`,
     };
   }
@@ -86,11 +89,11 @@ export function createRoundSelection(
       bestDiff = diff;
     }
     if (sum >= minimumTotal && sum <= maximumTotal) {
-      return { rounds: candidate, count, averageLength, targetTotal, minimumTotal, maximumTotal, totalLength: sum, attempts: attempt, withinRange: true, usedFallback: false };
+      return { rounds: candidate, count, averageLength, targetTotal, minimumTotal, maximumTotal, totalLength: sum, attempts: attempt, withinRange: true, usedFallback: false, excludedByLength: rows.filter((row) => !isSentenceLengthAllowed(row.text)).length };
     }
   }
   const total = totalLength(best);
-  return { rounds: best, count, averageLength, targetTotal, minimumTotal, maximumTotal, totalLength: total, attempts: maxAttempts, withinRange: false, usedFallback: true };
+  return { rounds: best, count, averageLength, targetTotal, minimumTotal, maximumTotal, totalLength: total, attempts: maxAttempts, withinRange: false, usedFallback: true, excludedByLength: rows.filter((row) => !isSentenceLengthAllowed(row.text)).length };
 }
 
 export function sessionUsageFromHistory(history: Session[]) {

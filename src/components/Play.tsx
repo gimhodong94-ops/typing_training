@@ -1,23 +1,25 @@
 import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { Keyboard } from "./Keyboard";
-import { KEYPOS, MODIFIERS, TYPABLE, charFor, handOf, jamoFor, keysForText, type WristAnchors } from "../lib/keyboard";
+import { KEYPOS, MODIFIERS, TYPABLE, charFor, handOf, isShiftMismatch, jamoFor, keysForText, type WristAnchors } from "../lib/keyboard";
 import { composeTyped, type TypedKey } from "../lib/hangul";
 import { activeElapsedMs, shouldIgnoreKeyWhilePaused } from "../lib/pauseMetrics";
 import type { Sentence } from "../lib/sentences";
 import type { KeyEvent, PauseInterval, RoundRecord } from "../lib/types";
+import { shouldIgnoreDuplicateImeKey, shouldIgnoreDuplicateImeSpace } from "../lib/detection";
 
-type Entry = { ok: boolean; code: string; shift: boolean; ime: boolean; resumedAfterPause?: boolean };
+type Entry = { ok: boolean; code: string; shift: boolean; ime: boolean; event: KeyEvent; resumedAfterPause?: boolean };
 type Props = {
   rounds: Sentence[];
   hint: boolean;
   wristAnchors: WristAnchors;
   electron: boolean;
   roundCount: number;
+  generalPractice?: boolean;
   onFinish: (records: RoundRecord[], pauses?: PauseInterval[]) => void;
   onAbort: () => void;
 };
 
-export function Play({ rounds, hint, wristAnchors, electron, roundCount, onFinish, onAbort }: Props) {
+export function Play({ rounds, hint, wristAnchors, electron, roundCount, generalPractice, onFinish, onAbort }: Props) {
   const [idx, setIdx] = useState(0);
   const [wrong, setWrong] = useState<string | null>(null);
   const [paused, setPaused] = useState(false);
@@ -34,9 +36,12 @@ export function Play({ rounds, hint, wristAnchors, electron, roundCount, onFinis
   live.current = { idx, expected, sentence };
   const st = useRef({
     buf: [] as Entry[], events: [] as KeyEvent[], t0: 0, locked: false, done: false, caps: false,
-    lastEnter: 0, lastSpace: 0, lastPunctuation: {} as Record<string, number>, lastMismatch: false, records: [] as RoundRecord[],
+    lastEnter: 0, lastSpace: 0, lastSpaceImeSignal: false, lastSymbol: undefined as { code: string; shift: boolean; imeSignal: boolean; t: number } | undefined, lastMismatch: false, records: [] as RoundRecord[],
     paused: false, pauseStartedAt: 0, roundPausedMs: 0, pauseSeq: 0, resumeAt: 0, resumeFirstPending: false,
     pauses: [] as PauseInterval[],
+    activeShifts: new Set<string>(),
+    activeDowns: new Map<string, KeyEvent>(),
+    episodeCounter: 0, activeEpisode: undefined as number | undefined,
   });
 
   useEffect(() => {
@@ -45,7 +50,12 @@ export function Play({ rounds, hint, wristAnchors, electron, roundCount, onFinis
     s.events = [];
     s.done = false;
     s.lastMismatch = false;
-    s.lastPunctuation = {};
+    s.episodeCounter = 0;
+    s.activeEpisode = undefined;
+    s.lastSpace = 0;
+    s.lastSpaceImeSignal = false;
+    s.lastSymbol = undefined;
+    s.activeDowns.clear();
     s.roundPausedMs = 0;
     s.locked = true;
     const raf = requestAnimationFrame(() => {
@@ -106,31 +116,41 @@ export function Play({ rounds, hint, wristAnchors, electron, roundCount, onFinis
       e.preventDefault();
       if (s.locked || (e.repeat && e.code !== "Backspace")) return;
 
-      if (e.code === "Comma" || e.code === "Period") {
-        const now = performance.now();
-        if (now - (s.lastPunctuation[e.code] ?? -Infinity) < 70) return;
-        s.lastPunctuation[e.code] = now;
-      }
-
       if (e.code === "Space") {
-        // 한글 입력기가 조합을 끝내며 스페이스 keydown을 연달아 두 번 보내는 경우가 있어 짧은 간격의 중복은 무시한다
         const now = performance.now();
-        if (now - s.lastSpace < 60) return;
+        const imeSignal = e.isComposing || e.keyCode === 229 || e.key === "Process";
+        if (shouldIgnoreDuplicateImeSpace(now, s.lastSpace, s.lastSpaceImeSignal, imeSignal)) return;
         s.lastSpace = now;
+        s.lastSpaceImeSignal = imeSignal;
       }
 
       s.caps = e.getModifierState("CapsLock");
       const now = performance.now();
+      const symbol = charFor(e.code, e.shiftKey);
+      const isSymbol = !!symbol && !/^[A-Za-z0-9 ]$/.test(symbol);
+      if (isSymbol) {
+        // Some Windows IME paths emit the same punctuation keydown twice.
+        // Require a Process/229 signal so fast intentional repeats still count.
+        const imeSignal = e.key === "Process" || e.keyCode === 229;
+        const current = { code: e.code, shift: e.shiftKey, imeSignal };
+        if (shouldIgnoreDuplicateImeKey(now, s.lastSymbol, current)) return;
+        s.lastSymbol = { ...current, t: now };
+      } else s.lastSymbol = undefined;
       const modifier = MODIFIERS.has(e.code);
+      if (e.code === "ShiftLeft" || e.code === "ShiftRight") s.activeShifts.add(e.code);
+      const shiftSide = s.activeShifts.size > 1 ? "both" : s.activeShifts.has("ShiftLeft") ? "ShiftLeft" : s.activeShifts.has("ShiftRight") ? "ShiftRight" : e.shiftKey ? "unknown" : undefined;
       const resumedAfterPause = electron && s.resumeFirstPending;
       const base: Omit<KeyEvent, "kind"> = {
         t: Math.max(0, Math.round(now - s.t0 - s.roundPausedMs)),
         code: e.code, pos: s.buf.length, shift: e.shiftKey, caps: s.caps,
-        ...(electron ? {
-          sessionMs: Math.round(now - sessionStartedAt.current),
-          pauseSeq: s.pauseSeq,
-          ...(resumedAfterPause ? { resumedAfterPause: true, resumeDelayMs: Math.max(0, Math.round(now - s.resumeAt)) } : {}),
-        } : {}),
+        ...(shiftSide ? { shiftSide } : {}),
+        sessionMs: Math.round(now - sessionStartedAt.current),
+        pauseSeq: s.pauseSeq,
+        ...(electron && resumedAfterPause ? { resumedAfterPause: true, resumeDelayMs: Math.max(0, Math.round(now - s.resumeAt)) } : {}),
+      };
+      const record = (event: KeyEvent) => {
+        s.events.push(event);
+        s.activeDowns.set(e.code, event);
       };
       if (resumedAfterPause) {
         s.resumeFirstPending = false;
@@ -141,7 +161,7 @@ export function Play({ rounds, hint, wristAnchors, electron, roundCount, onFinis
       if (s.done) {
         if ((e.code === "Enter" || e.code === "NumpadEnter") && now - s.lastEnter > 250) {
           s.lastEnter = now;
-          if (electron) s.events.push({ ...base, kind: "submit" });
+          if (electron) record({ ...base, kind: "submit" });
           s.done = false;
           s.buf = [];
           s.events = [];
@@ -152,12 +172,30 @@ export function Play({ rounds, hint, wristAnchors, electron, roundCount, onFinis
       }
 
       if (modifier) {
-        s.events.push({ ...base, kind: "modifier" });
+        record({ ...base, kind: "modifier" });
+        return;
+      }
+      if (e.code === "CapsLock") {
+        record({ ...base, kind: "modifier" });
+        return;
+      }
+      if (e.code === "Lang1" || e.code === "Hangul") {
+        record({ ...base, kind: "modifier", inputModeKey: "toggle" });
+        return;
+      }
+      if (e.code === "Lang2" || e.code === "Hanja") {
+        record({ ...base, kind: "modifier", inputModeKey: "hanja" });
         return;
       }
       if (e.code === "Backspace") {
-        s.events.push({ ...base, kind: "backspace" });
-        s.buf.pop();
+        const removed = s.buf.pop();
+        const needed = s.buf.some((entry) => !entry.ok) || !!(removed && !removed.ok);
+        const removedUnit = removed
+          ? removed.code.startsWith("Key") && removed.ime ? jamoFor(removed.code, removed.shift) : charFor(removed.code, removed.shift)
+          : undefined;
+        if (removed) removed.event.removed = true;
+        record({ ...base, kind: "backspace", removedUnit, removedWasCorrect: removed?.ok, removedNeeded: needed });
+        if (!s.buf.some((entry) => !entry.ok)) s.activeEpisode = undefined;
         s.lastMismatch = false;
         render();
         return;
@@ -167,56 +205,90 @@ export function Play({ rounds, hint, wristAnchors, electron, roundCount, onFinis
         return;
       }
       if (!TYPABLE.has(e.code)) {
-        s.events.push({ ...base, kind: "other", err: e.code === "CapsLock" ? "Caps Lock" : "비문자 키" });
+        record({ ...base, kind: "other", err: e.code === "CapsLock" ? "Caps Lock" : "비문자 키" });
         flash(e.code);
         return;
       }
 
       const pos = s.buf.length;
       if (pos >= exp.length) {
-        s.events.push({ ...base, kind: "overflow", err: "초과 입력", ok: false });
+        record({ ...base, kind: "overflow", typedKey: e.code, typedShift: e.shiftKey, err: "초과 입력", ok: false });
         flash(e.code);
         return;
       }
       const want = exp[pos];
       const isKeyLetter = e.code.startsWith("Key");
-      const ime = isKeyLetter && (e.isComposing || e.keyCode === 229 || e.key === "Process");
+      const processSignal = e.key === "Process";
+      const latinKeySignal = /^[A-Za-z]$/.test(e.key);
+      const imeEvidence = processSignal ? "process" as const
+        : e.keyCode === 229 ? "legacy-229" as const
+          : e.isComposing ? "composing" as const
+            : latinKeySignal ? "latin-key" as const : "unknown" as const;
+      const imeKnown = !isKeyLetter || imeEvidence !== "unknown";
+      const ime = isKeyLetter && (processSignal || e.keyCode === 229 || e.isComposing);
       const wantIme = want.lang === "ko";
       const shift = isKeyLetter && !ime && s.caps ? !e.shiftKey : e.shiftKey;
-      const modeOk = !isKeyLetter || ime === wantIme;
-      const koreanTenseKey = ["KeyQ", "KeyW", "KeyE", "KeyR", "KeyT"].includes(want.code);
-      const shiftMatters = want.lang === "en" || want.shift || koreanTenseKey;
-      const shiftOk = !shiftMatters || shift === want.shift;
+      const modeOk = !isKeyLetter || (imeKnown && ime === wantIme);
+      const shiftWrong = isShiftMismatch(want.code, want.lang, want.shift, shift);
+      const shiftOk = !shiftWrong;
       const ok = e.code === want.code && shiftOk && modeOk;
       let err: string | undefined;
       if (!ok) {
         if (e.code !== want.code) err = "다른 키";
+        else if (!imeKnown) err = "정렬 모호";
         else if (!modeOk) err = "한/영 상태";
-        else if (isKeyLetter && !ime && s.caps) err = "Caps Lock";
-        else err = want.shift ? "Shift 빠뜨림" : "Shift 잘못 누름";
+        else if (want.lang === "en" && isKeyLetter && !ime && s.caps && e.code === want.code && shiftWrong) err = "Caps Lock";
+        else err = "Shift 실수";
       }
       s.lastMismatch = err === "한/영 상태";
+      const hasOpenError = s.buf.some((entry) => !entry.ok);
+      const episodeId = !ok ? (s.activeEpisode ?? ++s.episodeCounter) : undefined;
+      const episodeRole = !ok ? (hasOpenError ? "cascade" as const : "first" as const) : undefined;
+      if (!ok) s.activeEpisode = episodeId;
       const a = KEYPOS[e.code];
       const b = KEYPOS[want.code];
-      s.events.push({
-        ...base, kind: "char", shift, exp: want.code, expShift: want.shift, ok, err, ime,
+      const event: KeyEvent = {
+        ...base, kind: "char", shift, exp: want.code, expShift: want.shift, targetKey: want.code, typedKey: e.code,
+        targetShift: want.shift, typedShift: e.shiftKey, nextTargetKey: exp[pos + 1]?.code,
+        ok, err, ime, imeKnown, ...(isKeyLetter ? { imeEvidence } : {}),
         dx: a && b ? +(a.x - b.x).toFixed(2) : undefined,
         dy: a && b ? a.y - b.y : undefined,
         isNext: !!exp[pos + 1] && e.code === exp[pos + 1].code,
         isPrev: pos > 0 && e.code === exp[pos - 1].code,
-      });
-      s.buf.push({ ok, code: e.code, shift, ime, ...(resumedAfterPause ? { resumedAfterPause: true } : {}) });
+        ...(episodeId === undefined ? {} : { episodeId, episodeRole }),
+      };
+      record(event);
+      s.buf.push({ ok, code: e.code, shift, ime, event, ...(resumedAfterPause ? { resumedAfterPause: true } : {}) });
       if (!ok) flash(e.code);
 
       if (s.buf.length === exp.length && s.buf.every((x) => x.ok)) {
         s.done = true;
-        s.records.push({ id: sent.id, text: sent.text, tags: sent.tags, events: s.events });
+        s.events.forEach((event, eventIndex) => {
+          if (event.kind !== "char" || event.ok || !event.targetKey) return;
+          event.targetPressedLaterOk = s.events.slice(eventIndex + 1).some((later) =>
+            later.kind === "char" && later.pos === event.pos && later.ok === true && later.targetKey === event.targetKey,
+          );
+        });
+        s.records.push({ id: sent.id, text: sent.text, events: s.events });
       }
       render();
     };
     window.addEventListener("keydown", onKey);
+    const onKeyUp = (event: KeyboardEvent) => {
+      const s = st.current;
+      const now = performance.now();
+      const recorded = s.activeDowns.get(event.code);
+      if (recorded) {
+        recorded.keyupT = Math.max(0, Math.round(now - s.t0 - s.roundPausedMs));
+        recorded.keyupPauseSeq = s.pauseSeq;
+        s.activeDowns.delete(event.code);
+      }
+      if (event.code === "ShiftLeft" || event.code === "ShiftRight") s.activeShifts.delete(event.code);
+    };
+    window.addEventListener("keyup", onKeyUp);
     return () => {
       window.removeEventListener("keydown", onKey);
+      window.removeEventListener("keyup", onKeyUp);
       window.clearTimeout(flashTimer);
     };
   }, [electron, rounds, onFinish]);
@@ -277,8 +349,10 @@ export function Play({ rounds, hint, wristAnchors, electron, roundCount, onFinis
       </header>
 
       <section className="target" aria-label="따라 칠 문장">
+        {generalPractice && idx === 0 && <p className="note">아직 뚜렷한 약점이 없어 일반 연습을 준비했어요</p>}
         {paused ? <div className="pause-mask">일시정지 중</div> : <>
           <span className="box-label">칠 문장</span>
+          {sentence.focus && <span className="note">이번 문장 연습 키: {sentence.focus}</span>}
           <p className="sentence" lang="ko">
             {[...sentence.text].map((c, n) => (
               <span key={n} className={`ch ${!done && n === cursorChar ? "cursor" : ""}`}>{c}</span>
@@ -295,7 +369,7 @@ export function Play({ rounds, hint, wristAnchors, electron, roundCount, onFinis
           </span>
           <p className="typed" lang="ko" aria-live="off">
             {typed.map((t, n) => (
-              <span key={n} className={t.ok ? "" : "bad"}>{t.text === " " ? "\u00a0" : t.text}</span>
+              <span key={n} className={`${t.ok ? "" : "bad"} ${n >= sentence.text.length ? "overflow" : ""}`}>{t.text}</span>
             ))}
             {!done && <i className="caret" />}
           </p>

@@ -1,0 +1,1346 @@
+{
+  "sourceSessionId": 1795360215811,
+  "sourceFile": "typing-session-1795360215811.json",
+  "rounds": 10,
+  "facts": [
+    {
+      "id": "F01",
+      "label": "세션 전체 오입력률",
+      "k": 78,
+      "n": 1039,
+      "rate": 7.5,
+      "ci": null,
+      "basis": "전체 오입력 기준"
+    },
+    {
+      "id": "F02",
+      "label": "D(ㅇ) 키 오타율",
+      "k": 8,
+      "n": 99,
+      "rate": 8.1,
+      "ci": {
+        "lower": 4.2,
+        "upper": 15.1
+      },
+      "basis": "첫 오입력 기준",
+      "confidence": "낮음"
+    },
+    {
+      "id": "F03",
+      "label": "T(ㅅ) 키 오타율",
+      "k": 2,
+      "n": 38,
+      "rate": 5.3,
+      "ci": {
+        "lower": 1.5,
+        "upper": 17.3
+      },
+      "basis": "첫 오입력 기준",
+      "confidence": "낮음"
+    },
+    {
+      "id": "F04",
+      "label": "A(ㅁ) 키 오타율",
+      "k": 1,
+      "n": 21,
+      "rate": 4.8,
+      "ci": {
+        "lower": 0.8,
+        "upper": 22.7
+      },
+      "basis": "첫 오입력 기준",
+      "confidence": "낮음"
+    },
+    {
+      "id": "F05",
+      "label": "스페이스 키 오타율",
+      "k": 4,
+      "n": 109,
+      "rate": 3.7,
+      "ci": {
+        "lower": 1.4,
+        "upper": 9.1
+      },
+      "basis": "첫 오입력 기준",
+      "confidence": "낮음"
+    },
+    {
+      "id": "F06",
+      "label": "J(ㅓ) 키 오타율",
+      "k": 1,
+      "n": 37,
+      "rate": 2.7,
+      "ci": {
+        "lower": 0.5,
+        "upper": 13.8
+      },
+      "basis": "첫 오입력 기준",
+      "confidence": "낮음"
+    },
+    {
+      "id": "F07",
+      "label": "Q(ㅂ) 키 오타율",
+      "k": 1,
+      "n": 16,
+      "rate": 6.3,
+      "ci": {
+        "lower": 1.1,
+        "upper": 28.3
+      },
+      "basis": "첫 오입력 기준",
+      "confidence": "낮음"
+    },
+    {
+      "id": "F08",
+      "label": "S(ㄴ) 키 오타율",
+      "k": 2,
+      "n": 91,
+      "rate": 2.2,
+      "ci": {
+        "lower": 0.6,
+        "upper": 7.7
+      },
+      "basis": "첫 오입력 기준",
+      "confidence": "낮음"
+    },
+    {
+      "id": "F09",
+      "label": "G(ㅎ) 키 오타율",
+      "k": 2,
+      "n": 41,
+      "rate": 4.9,
+      "ci": {
+        "lower": 1.3,
+        "upper": 16.1
+      },
+      "basis": "첫 오입력 기준",
+      "confidence": "낮음"
+    },
+    {
+      "id": "F10",
+      "label": "K(ㅏ) 키 오타율",
+      "k": 3,
+      "n": 88,
+      "rate": 3.4,
+      "ci": {
+        "lower": 1.2,
+        "upper": 9.5
+      },
+      "basis": "첫 오입력 기준",
+      "confidence": "낮음"
+    },
+    {
+      "id": "F11",
+      "label": "L(ㅣ) 키 오타율",
+      "k": 1,
+      "n": 62,
+      "rate": 1.6,
+      "ci": {
+        "lower": 0.3,
+        "upper": 8.6
+      },
+      "basis": "첫 오입력 기준",
+      "confidence": "낮음"
+    },
+    {
+      "id": "F12",
+      "label": "E(ㄷ) 키 오타율",
+      "k": 4,
+      "n": 37,
+      "rate": 10.8,
+      "ci": {
+        "lower": 4.3,
+        "upper": 24.7
+      },
+      "basis": "첫 오입력 기준",
+      "confidence": "낮음"
+    },
+    {
+      "id": "F13",
+      "label": "H(ㅗ) 키 오타율",
+      "k": 1,
+      "n": 30,
+      "rate": 3.3,
+      "ci": {
+        "lower": 0.6,
+        "upper": 16.7
+      },
+      "basis": "첫 오입력 기준",
+      "confidence": "낮음"
+    },
+    {
+      "id": "F14",
+      "label": "W(ㅈ) 키 오타율",
+      "k": 1,
+      "n": 36,
+      "rate": 2.8,
+      "ci": {
+        "lower": 0.5,
+        "upper": 14.2
+      },
+      "basis": "첫 오입력 기준",
+      "confidence": "낮음"
+    },
+    {
+      "id": "F15",
+      "label": "P(ㅔ) 키 오타율",
+      "k": 1,
+      "n": 13,
+      "rate": 7.7,
+      "ci": {
+        "lower": 1.4,
+        "upper": 33.3
+      },
+      "basis": "첫 오입력 기준",
+      "confidence": "낮음"
+    },
+    {
+      "id": "F16",
+      "label": "C(ㅊ) 키 오타율",
+      "k": 3,
+      "n": 9,
+      "rate": 33.3,
+      "ci": {
+        "lower": 12.1,
+        "upper": 64.6
+      },
+      "basis": "첫 오입력 기준",
+      "confidence": "낮음"
+    },
+    {
+      "id": "F17",
+      "label": "U(ㅕ) 키 오타율",
+      "k": 1,
+      "n": 17,
+      "rate": 5.9,
+      "ci": {
+        "lower": 1,
+        "upper": 27
+      },
+      "basis": "첫 오입력 기준",
+      "confidence": "낮음"
+    },
+    {
+      "id": "F18",
+      "label": "키 간격 중앙값(ms)",
+      "k": 131,
+      "n": 925,
+      "rate": null,
+      "ci": null,
+      "basis": "샘플 분석"
+    },
+    {
+      "id": "F19",
+      "label": "첫 입력 지연 평균(ms)",
+      "k": 958,
+      "n": 10,
+      "rate": null,
+      "ci": null,
+      "basis": "샘플 분석"
+    },
+    {
+      "id": "F20",
+      "label": "C(ㅊ) 키 중앙 간격(ms)",
+      "k": 458,
+      "n": 4,
+      "rate": null,
+      "ci": null,
+      "basis": "샘플 분석"
+    },
+    {
+      "id": "F21",
+      "label": ". 키 중앙 간격(ms)",
+      "k": 347.5,
+      "n": 14,
+      "rate": null,
+      "ci": null,
+      "basis": "샘플 분석"
+    },
+    {
+      "id": "F22",
+      "label": "G(ㅎ) 키 중앙 간격(ms)",
+      "k": 227.4,
+      "n": 37,
+      "rate": null,
+      "ci": null,
+      "basis": "샘플 분석"
+    },
+    {
+      "id": "F23",
+      "label": "W(ㅈ) 키 중앙 간격(ms)",
+      "k": 224.3,
+      "n": 30,
+      "rate": null,
+      "ci": null,
+      "basis": "샘플 분석"
+    },
+    {
+      "id": "F24",
+      "label": "T(ㅅ) 키 중앙 간격(ms)",
+      "k": 212.1,
+      "n": 33,
+      "rate": null,
+      "ci": null,
+      "basis": "샘플 분석"
+    },
+    {
+      "id": "F25",
+      "label": "느린 어절 전 (타/분)",
+      "k": 74.9,
+      "n": 4,
+      "rate": null,
+      "ci": null,
+      "basis": "샘플 분석"
+    },
+    {
+      "id": "F26",
+      "label": "느린 어절 것에 (타/분)",
+      "k": 89.2,
+      "n": 6,
+      "rate": null,
+      "ci": null,
+      "basis": "샘플 분석"
+    },
+    {
+      "id": "F27",
+      "label": "느린 어절 정의했다. (타/분)",
+      "k": 98.3,
+      "n": 12,
+      "rate": null,
+      "ci": null,
+      "basis": "샘플 분석"
+    },
+    {
+      "id": "F28",
+      "label": "느린 어절 것이었다. (타/분)",
+      "k": 107.9,
+      "n": 11,
+      "rate": null,
+      "ci": null,
+      "basis": "샘플 분석"
+    },
+    {
+      "id": "F29",
+      "label": "느린 어절 본 (타/분)",
+      "k": 111.7,
+      "n": 4,
+      "rate": null,
+      "ci": null,
+      "basis": "샘플 분석"
+    },
+    {
+      "id": "F30",
+      "label": "왼손 중지 손가락 오타율",
+      "k": 15,
+      "n": 145,
+      "rate": 10.3,
+      "ci": {
+        "lower": 6.4,
+        "upper": 16.4
+      },
+      "basis": "첫 오입력 기준"
+    },
+    {
+      "id": "F31",
+      "label": "오른손 검지 손가락 오타율",
+      "k": 3,
+      "n": 171,
+      "rate": 1.8,
+      "ci": {
+        "lower": 0.6,
+        "upper": 5
+      },
+      "basis": "첫 오입력 기준"
+    },
+    {
+      "id": "F32",
+      "label": "왼손 검지 손가락 오타율",
+      "k": 5,
+      "n": 193,
+      "rate": 2.6,
+      "ci": {
+        "lower": 1.1,
+        "upper": 5.9
+      },
+      "basis": "첫 오입력 기준"
+    },
+    {
+      "id": "F33",
+      "label": "왼손 새끼손가락 손가락 오타율",
+      "k": 2,
+      "n": 39,
+      "rate": 5.1,
+      "ci": {
+        "lower": 1.4,
+        "upper": 16.9
+      },
+      "basis": "첫 오입력 기준"
+    },
+    {
+      "id": "F34",
+      "label": "엄지 손가락 오타율",
+      "k": 4,
+      "n": 109,
+      "rate": 3.7,
+      "ci": {
+        "lower": 1.4,
+        "upper": 9.1
+      },
+      "basis": "첫 오입력 기준"
+    },
+    {
+      "id": "F35",
+      "label": "왼손 약지 손가락 오타율",
+      "k": 3,
+      "n": 130,
+      "rate": 2.3,
+      "ci": {
+        "lower": 0.8,
+        "upper": 6.6
+      },
+      "basis": "첫 오입력 기준"
+    },
+    {
+      "id": "F36",
+      "label": "오른손 중지 손가락 오타율",
+      "k": 4,
+      "n": 93,
+      "rate": 4.3,
+      "ci": {
+        "lower": 1.7,
+        "upper": 10.5
+      },
+      "basis": "첫 오입력 기준"
+    },
+    {
+      "id": "F37",
+      "label": "오른손 약지 손가락 오타율",
+      "k": 1,
+      "n": 94,
+      "rate": 1.1,
+      "ci": {
+        "lower": 0.2,
+        "upper": 5.8
+      },
+      "basis": "첫 오입력 기준"
+    },
+    {
+      "id": "F38",
+      "label": "오른손 새끼손가락 손가락 오타율",
+      "k": 1,
+      "n": 13,
+      "rate": 7.7,
+      "ci": {
+        "lower": 1.4,
+        "upper": 33.3
+      },
+      "basis": "첫 오입력 기준"
+    },
+    {
+      "id": "F39",
+      "label": "한글 초성 오타율",
+      "k": 20,
+      "n": 310,
+      "rate": 6.5,
+      "ci": {
+        "lower": 4.2,
+        "upper": 9.8
+      },
+      "basis": "첫 오입력 기준"
+    },
+    {
+      "id": "F40",
+      "label": "한글 중성 오타율",
+      "k": 6,
+      "n": 304,
+      "rate": 2,
+      "ci": {
+        "lower": 0.9,
+        "upper": 4.2
+      },
+      "basis": "첫 오입력 기준"
+    },
+    {
+      "id": "F41",
+      "label": "한글 종성 오타율",
+      "k": 7,
+      "n": 246,
+      "rate": 2.8,
+      "ci": {
+        "lower": 1.4,
+        "upper": 5.8
+      },
+      "basis": "첫 오입력 기준"
+    },
+    {
+      "id": "F42",
+      "label": "받침 있음 오타율",
+      "k": 19,
+      "n": 492,
+      "rate": 3.9,
+      "ci": {
+        "lower": 2.5,
+        "upper": 6
+      },
+      "basis": "첫 오입력 기준"
+    },
+    {
+      "id": "F43",
+      "label": "받침 없음 오타율",
+      "k": 14,
+      "n": 368,
+      "rate": 3.8,
+      "ci": {
+        "lower": 2.3,
+        "upper": 6.3
+      },
+      "basis": "첫 오입력 기준"
+    },
+    {
+      "id": "F44",
+      "label": "뻗음 가까움 오타율",
+      "k": 0,
+      "n": 549,
+      "rate": 0,
+      "ci": {
+        "lower": 0,
+        "upper": 0.7
+      },
+      "basis": "첫 오입력 기준"
+    },
+    {
+      "id": "F45",
+      "label": "뻗음 보통 오타율",
+      "k": 0,
+      "n": 326,
+      "rate": 0,
+      "ci": {
+        "lower": 0,
+        "upper": 1.2
+      },
+      "basis": "첫 오입력 기준"
+    },
+    {
+      "id": "F46",
+      "label": "뻗음 멂 오타율",
+      "k": 0,
+      "n": 60,
+      "rate": 0,
+      "ci": {
+        "lower": 0,
+        "upper": 6
+      },
+      "basis": "첫 오입력 기준"
+    },
+    {
+      "id": "F47",
+      "label": "같은 손 연속 간격 중앙값(ms)",
+      "k": 202,
+      "n": 119,
+      "rate": null,
+      "ci": null,
+      "basis": "샘플 분석"
+    },
+    {
+      "id": "F48",
+      "label": "번갈아 입력 간격 중앙값(ms)",
+      "k": 109,
+      "n": 561,
+      "rate": null,
+      "ci": null,
+      "basis": "샘플 분석"
+    },
+    {
+      "id": "F49",
+      "label": "공백 누락",
+      "k": 7,
+      "n": 14,
+      "rate": null,
+      "ci": null,
+      "basis": "첫 오입력 기준"
+    },
+    {
+      "id": "F50",
+      "label": "공백 초과",
+      "k": 7,
+      "n": 14,
+      "rate": null,
+      "ci": null,
+      "basis": "첫 오입력 기준"
+    },
+    {
+      "id": "F51",
+      "label": "공백 위치 오류",
+      "k": 0,
+      "n": 14,
+      "rate": null,
+      "ci": null,
+      "basis": "첫 오입력 기준"
+    },
+    {
+      "id": "F52",
+      "label": "한/영 상태 오입력 전체",
+      "k": 1,
+      "n": 909,
+      "rate": 0.1,
+      "ci": null,
+      "basis": "첫 오입력 기준"
+    },
+    {
+      "id": "F53",
+      "label": "한/영 상태 오입력 지움",
+      "k": 1,
+      "n": 909,
+      "rate": 0.1,
+      "ci": null,
+      "basis": "첫 오입력 기준"
+    },
+    {
+      "id": "F54",
+      "label": "Shift 조합 오타",
+      "k": 5,
+      "n": 16,
+      "rate": 31.3,
+      "ci": {
+        "lower": 14.2,
+        "upper": 55.6
+      },
+      "basis": "첫 오입력 기준",
+      "confidence": "중간"
+    },
+    {
+      "id": "F55",
+      "label": "오타 수정 평균 시간(ms)",
+      "k": 779.7,
+      "n": 42,
+      "rate": null,
+      "ci": null,
+      "basis": "샘플 분석"
+    },
+    {
+      "id": "F56",
+      "label": "수정 중 재오타 횟수",
+      "k": 4,
+      "n": 42,
+      "rate": null,
+      "ci": null,
+      "basis": "첫 오입력 기준"
+    },
+    {
+      "id": "F57",
+      "label": "고치지 않고 이어서 친 최대 연속 수",
+      "k": 3,
+      "n": 10,
+      "rate": null,
+      "ci": null,
+      "basis": "샘플 분석"
+    },
+    {
+      "id": "F58",
+      "label": "일시정지 횟수",
+      "k": 0,
+      "n": 10,
+      "rate": null,
+      "ci": null,
+      "basis": "샘플 분석"
+    },
+    {
+      "id": "F59",
+      "label": "일시정지 총 시간(ms)",
+      "k": 0,
+      "n": 0,
+      "rate": null,
+      "ci": null,
+      "basis": "샘플 분석"
+    }
+  ],
+  "feedbackAIInputExample": {
+    "facts": [
+      {
+        "id": "F01",
+        "label": "세션 전체 오입력률",
+        "k": 78,
+        "n": 1039,
+        "rate": 7.5,
+        "ci": null,
+        "basis": "전체 오입력 기준"
+      },
+      {
+        "id": "F02",
+        "label": "D(ㅇ) 키 오타율",
+        "k": 8,
+        "n": 99,
+        "rate": 8.1,
+        "ci": {
+          "lower": 4.2,
+          "upper": 15.1
+        },
+        "basis": "첫 오입력 기준",
+        "confidence": "낮음"
+      },
+      {
+        "id": "F03",
+        "label": "T(ㅅ) 키 오타율",
+        "k": 2,
+        "n": 38,
+        "rate": 5.3,
+        "ci": {
+          "lower": 1.5,
+          "upper": 17.3
+        },
+        "basis": "첫 오입력 기준",
+        "confidence": "낮음"
+      },
+      {
+        "id": "F04",
+        "label": "A(ㅁ) 키 오타율",
+        "k": 1,
+        "n": 21,
+        "rate": 4.8,
+        "ci": {
+          "lower": 0.8,
+          "upper": 22.7
+        },
+        "basis": "첫 오입력 기준",
+        "confidence": "낮음"
+      },
+      {
+        "id": "F05",
+        "label": "스페이스 키 오타율",
+        "k": 4,
+        "n": 109,
+        "rate": 3.7,
+        "ci": {
+          "lower": 1.4,
+          "upper": 9.1
+        },
+        "basis": "첫 오입력 기준",
+        "confidence": "낮음"
+      },
+      {
+        "id": "F06",
+        "label": "J(ㅓ) 키 오타율",
+        "k": 1,
+        "n": 37,
+        "rate": 2.7,
+        "ci": {
+          "lower": 0.5,
+          "upper": 13.8
+        },
+        "basis": "첫 오입력 기준",
+        "confidence": "낮음"
+      },
+      {
+        "id": "F07",
+        "label": "Q(ㅂ) 키 오타율",
+        "k": 1,
+        "n": 16,
+        "rate": 6.3,
+        "ci": {
+          "lower": 1.1,
+          "upper": 28.3
+        },
+        "basis": "첫 오입력 기준",
+        "confidence": "낮음"
+      },
+      {
+        "id": "F08",
+        "label": "S(ㄴ) 키 오타율",
+        "k": 2,
+        "n": 91,
+        "rate": 2.2,
+        "ci": {
+          "lower": 0.6,
+          "upper": 7.7
+        },
+        "basis": "첫 오입력 기준",
+        "confidence": "낮음"
+      },
+      {
+        "id": "F09",
+        "label": "G(ㅎ) 키 오타율",
+        "k": 2,
+        "n": 41,
+        "rate": 4.9,
+        "ci": {
+          "lower": 1.3,
+          "upper": 16.1
+        },
+        "basis": "첫 오입력 기준",
+        "confidence": "낮음"
+      },
+      {
+        "id": "F10",
+        "label": "K(ㅏ) 키 오타율",
+        "k": 3,
+        "n": 88,
+        "rate": 3.4,
+        "ci": {
+          "lower": 1.2,
+          "upper": 9.5
+        },
+        "basis": "첫 오입력 기준",
+        "confidence": "낮음"
+      },
+      {
+        "id": "F11",
+        "label": "L(ㅣ) 키 오타율",
+        "k": 1,
+        "n": 62,
+        "rate": 1.6,
+        "ci": {
+          "lower": 0.3,
+          "upper": 8.6
+        },
+        "basis": "첫 오입력 기준",
+        "confidence": "낮음"
+      },
+      {
+        "id": "F12",
+        "label": "E(ㄷ) 키 오타율",
+        "k": 4,
+        "n": 37,
+        "rate": 10.8,
+        "ci": {
+          "lower": 4.3,
+          "upper": 24.7
+        },
+        "basis": "첫 오입력 기준",
+        "confidence": "낮음"
+      },
+      {
+        "id": "F13",
+        "label": "H(ㅗ) 키 오타율",
+        "k": 1,
+        "n": 30,
+        "rate": 3.3,
+        "ci": {
+          "lower": 0.6,
+          "upper": 16.7
+        },
+        "basis": "첫 오입력 기준",
+        "confidence": "낮음"
+      },
+      {
+        "id": "F14",
+        "label": "W(ㅈ) 키 오타율",
+        "k": 1,
+        "n": 36,
+        "rate": 2.8,
+        "ci": {
+          "lower": 0.5,
+          "upper": 14.2
+        },
+        "basis": "첫 오입력 기준",
+        "confidence": "낮음"
+      },
+      {
+        "id": "F15",
+        "label": "P(ㅔ) 키 오타율",
+        "k": 1,
+        "n": 13,
+        "rate": 7.7,
+        "ci": {
+          "lower": 1.4,
+          "upper": 33.3
+        },
+        "basis": "첫 오입력 기준",
+        "confidence": "낮음"
+      },
+      {
+        "id": "F16",
+        "label": "C(ㅊ) 키 오타율",
+        "k": 3,
+        "n": 9,
+        "rate": 33.3,
+        "ci": {
+          "lower": 12.1,
+          "upper": 64.6
+        },
+        "basis": "첫 오입력 기준",
+        "confidence": "낮음"
+      },
+      {
+        "id": "F17",
+        "label": "U(ㅕ) 키 오타율",
+        "k": 1,
+        "n": 17,
+        "rate": 5.9,
+        "ci": {
+          "lower": 1,
+          "upper": 27
+        },
+        "basis": "첫 오입력 기준",
+        "confidence": "낮음"
+      },
+      {
+        "id": "F18",
+        "label": "키 간격 중앙값(ms)",
+        "k": 131,
+        "n": 925,
+        "rate": null,
+        "ci": null,
+        "basis": "샘플 분석"
+      },
+      {
+        "id": "F19",
+        "label": "첫 입력 지연 평균(ms)",
+        "k": 958,
+        "n": 10,
+        "rate": null,
+        "ci": null,
+        "basis": "샘플 분석"
+      },
+      {
+        "id": "F20",
+        "label": "C(ㅊ) 키 중앙 간격(ms)",
+        "k": 458,
+        "n": 4,
+        "rate": null,
+        "ci": null,
+        "basis": "샘플 분석"
+      },
+      {
+        "id": "F21",
+        "label": ". 키 중앙 간격(ms)",
+        "k": 347.5,
+        "n": 14,
+        "rate": null,
+        "ci": null,
+        "basis": "샘플 분석"
+      },
+      {
+        "id": "F22",
+        "label": "G(ㅎ) 키 중앙 간격(ms)",
+        "k": 227.4,
+        "n": 37,
+        "rate": null,
+        "ci": null,
+        "basis": "샘플 분석"
+      },
+      {
+        "id": "F23",
+        "label": "W(ㅈ) 키 중앙 간격(ms)",
+        "k": 224.3,
+        "n": 30,
+        "rate": null,
+        "ci": null,
+        "basis": "샘플 분석"
+      },
+      {
+        "id": "F24",
+        "label": "T(ㅅ) 키 중앙 간격(ms)",
+        "k": 212.1,
+        "n": 33,
+        "rate": null,
+        "ci": null,
+        "basis": "샘플 분석"
+      },
+      {
+        "id": "F25",
+        "label": "느린 어절 전 (타/분)",
+        "k": 74.9,
+        "n": 4,
+        "rate": null,
+        "ci": null,
+        "basis": "샘플 분석"
+      },
+      {
+        "id": "F26",
+        "label": "느린 어절 것에 (타/분)",
+        "k": 89.2,
+        "n": 6,
+        "rate": null,
+        "ci": null,
+        "basis": "샘플 분석"
+      },
+      {
+        "id": "F27",
+        "label": "느린 어절 정의했다. (타/분)",
+        "k": 98.3,
+        "n": 12,
+        "rate": null,
+        "ci": null,
+        "basis": "샘플 분석"
+      },
+      {
+        "id": "F28",
+        "label": "느린 어절 것이었다. (타/분)",
+        "k": 107.9,
+        "n": 11,
+        "rate": null,
+        "ci": null,
+        "basis": "샘플 분석"
+      },
+      {
+        "id": "F29",
+        "label": "느린 어절 본 (타/분)",
+        "k": 111.7,
+        "n": 4,
+        "rate": null,
+        "ci": null,
+        "basis": "샘플 분석"
+      },
+      {
+        "id": "F30",
+        "label": "왼손 중지 손가락 오타율",
+        "k": 15,
+        "n": 145,
+        "rate": 10.3,
+        "ci": {
+          "lower": 6.4,
+          "upper": 16.4
+        },
+        "basis": "첫 오입력 기준"
+      },
+      {
+        "id": "F31",
+        "label": "오른손 검지 손가락 오타율",
+        "k": 3,
+        "n": 171,
+        "rate": 1.8,
+        "ci": {
+          "lower": 0.6,
+          "upper": 5
+        },
+        "basis": "첫 오입력 기준"
+      },
+      {
+        "id": "F32",
+        "label": "왼손 검지 손가락 오타율",
+        "k": 5,
+        "n": 193,
+        "rate": 2.6,
+        "ci": {
+          "lower": 1.1,
+          "upper": 5.9
+        },
+        "basis": "첫 오입력 기준"
+      },
+      {
+        "id": "F33",
+        "label": "왼손 새끼손가락 손가락 오타율",
+        "k": 2,
+        "n": 39,
+        "rate": 5.1,
+        "ci": {
+          "lower": 1.4,
+          "upper": 16.9
+        },
+        "basis": "첫 오입력 기준"
+      },
+      {
+        "id": "F34",
+        "label": "엄지 손가락 오타율",
+        "k": 4,
+        "n": 109,
+        "rate": 3.7,
+        "ci": {
+          "lower": 1.4,
+          "upper": 9.1
+        },
+        "basis": "첫 오입력 기준"
+      },
+      {
+        "id": "F35",
+        "label": "왼손 약지 손가락 오타율",
+        "k": 3,
+        "n": 130,
+        "rate": 2.3,
+        "ci": {
+          "lower": 0.8,
+          "upper": 6.6
+        },
+        "basis": "첫 오입력 기준"
+      },
+      {
+        "id": "F36",
+        "label": "오른손 중지 손가락 오타율",
+        "k": 4,
+        "n": 93,
+        "rate": 4.3,
+        "ci": {
+          "lower": 1.7,
+          "upper": 10.5
+        },
+        "basis": "첫 오입력 기준"
+      },
+      {
+        "id": "F37",
+        "label": "오른손 약지 손가락 오타율",
+        "k": 1,
+        "n": 94,
+        "rate": 1.1,
+        "ci": {
+          "lower": 0.2,
+          "upper": 5.8
+        },
+        "basis": "첫 오입력 기준"
+      },
+      {
+        "id": "F38",
+        "label": "오른손 새끼손가락 손가락 오타율",
+        "k": 1,
+        "n": 13,
+        "rate": 7.7,
+        "ci": {
+          "lower": 1.4,
+          "upper": 33.3
+        },
+        "basis": "첫 오입력 기준"
+      },
+      {
+        "id": "F39",
+        "label": "한글 초성 오타율",
+        "k": 20,
+        "n": 310,
+        "rate": 6.5,
+        "ci": {
+          "lower": 4.2,
+          "upper": 9.8
+        },
+        "basis": "첫 오입력 기준"
+      },
+      {
+        "id": "F40",
+        "label": "한글 중성 오타율",
+        "k": 6,
+        "n": 304,
+        "rate": 2,
+        "ci": {
+          "lower": 0.9,
+          "upper": 4.2
+        },
+        "basis": "첫 오입력 기준"
+      },
+      {
+        "id": "F41",
+        "label": "한글 종성 오타율",
+        "k": 7,
+        "n": 246,
+        "rate": 2.8,
+        "ci": {
+          "lower": 1.4,
+          "upper": 5.8
+        },
+        "basis": "첫 오입력 기준"
+      },
+      {
+        "id": "F42",
+        "label": "받침 있음 오타율",
+        "k": 19,
+        "n": 492,
+        "rate": 3.9,
+        "ci": {
+          "lower": 2.5,
+          "upper": 6
+        },
+        "basis": "첫 오입력 기준"
+      },
+      {
+        "id": "F43",
+        "label": "받침 없음 오타율",
+        "k": 14,
+        "n": 368,
+        "rate": 3.8,
+        "ci": {
+          "lower": 2.3,
+          "upper": 6.3
+        },
+        "basis": "첫 오입력 기준"
+      },
+      {
+        "id": "F44",
+        "label": "뻗음 가까움 오타율",
+        "k": 0,
+        "n": 549,
+        "rate": 0,
+        "ci": {
+          "lower": 0,
+          "upper": 0.7
+        },
+        "basis": "첫 오입력 기준"
+      },
+      {
+        "id": "F45",
+        "label": "뻗음 보통 오타율",
+        "k": 0,
+        "n": 326,
+        "rate": 0,
+        "ci": {
+          "lower": 0,
+          "upper": 1.2
+        },
+        "basis": "첫 오입력 기준"
+      },
+      {
+        "id": "F46",
+        "label": "뻗음 멂 오타율",
+        "k": 0,
+        "n": 60,
+        "rate": 0,
+        "ci": {
+          "lower": 0,
+          "upper": 6
+        },
+        "basis": "첫 오입력 기준"
+      },
+      {
+        "id": "F47",
+        "label": "같은 손 연속 간격 중앙값(ms)",
+        "k": 202,
+        "n": 119,
+        "rate": null,
+        "ci": null,
+        "basis": "샘플 분석"
+      },
+      {
+        "id": "F48",
+        "label": "번갈아 입력 간격 중앙값(ms)",
+        "k": 109,
+        "n": 561,
+        "rate": null,
+        "ci": null,
+        "basis": "샘플 분석"
+      },
+      {
+        "id": "F49",
+        "label": "공백 누락",
+        "k": 7,
+        "n": 14,
+        "rate": null,
+        "ci": null,
+        "basis": "첫 오입력 기준"
+      },
+      {
+        "id": "F50",
+        "label": "공백 초과",
+        "k": 7,
+        "n": 14,
+        "rate": null,
+        "ci": null,
+        "basis": "첫 오입력 기준"
+      },
+      {
+        "id": "F51",
+        "label": "공백 위치 오류",
+        "k": 0,
+        "n": 14,
+        "rate": null,
+        "ci": null,
+        "basis": "첫 오입력 기준"
+      },
+      {
+        "id": "F52",
+        "label": "한/영 상태 오입력 전체",
+        "k": 1,
+        "n": 909,
+        "rate": 0.1,
+        "ci": null,
+        "basis": "첫 오입력 기준"
+      },
+      {
+        "id": "F53",
+        "label": "한/영 상태 오입력 지움",
+        "k": 1,
+        "n": 909,
+        "rate": 0.1,
+        "ci": null,
+        "basis": "첫 오입력 기준"
+      },
+      {
+        "id": "F54",
+        "label": "Shift 조합 오타",
+        "k": 5,
+        "n": 16,
+        "rate": 31.3,
+        "ci": {
+          "lower": 14.2,
+          "upper": 55.6
+        },
+        "basis": "첫 오입력 기준",
+        "confidence": "중간"
+      },
+      {
+        "id": "F55",
+        "label": "오타 수정 평균 시간(ms)",
+        "k": 779.7,
+        "n": 42,
+        "rate": null,
+        "ci": null,
+        "basis": "샘플 분석"
+      },
+      {
+        "id": "F56",
+        "label": "수정 중 재오타 횟수",
+        "k": 4,
+        "n": 42,
+        "rate": null,
+        "ci": null,
+        "basis": "첫 오입력 기준"
+      },
+      {
+        "id": "F57",
+        "label": "고치지 않고 이어서 친 최대 연속 수",
+        "k": 3,
+        "n": 10,
+        "rate": null,
+        "ci": null,
+        "basis": "샘플 분석"
+      },
+      {
+        "id": "F58",
+        "label": "일시정지 횟수",
+        "k": 0,
+        "n": 10,
+        "rate": null,
+        "ci": null,
+        "basis": "샘플 분석"
+      },
+      {
+        "id": "F59",
+        "label": "일시정지 총 시간(ms)",
+        "k": 0,
+        "n": 0,
+        "rate": null,
+        "ci": null,
+        "basis": "샘플 분석"
+      }
+    ],
+    "weaknessEligibility": {
+      "canDiagnose": false,
+      "matchingSessions": 1,
+      "requiredSessions": 3,
+      "hintOn": true
+    },
+    "sentenceAnalyses": [],
+    "answers": [],
+    "excludedTopics": []
+  },
+  "phase3": {
+    "selectedRounds": [
+      {
+        "roundIndex": 2,
+        "roundId": "quote_009",
+        "text": "실수를 한 번도 해보지 않은 사람은 한 번도 새로운 것에 도전해 본 적이 없는 사람이다.",
+        "errorRate": 0.07964601769911504,
+        "firstErrorEpisodes": 4
+      },
+      {
+        "roundIndex": 3,
+        "roundId": "quote_025",
+        "text": "좋은 친구는 정답을 알려주기보다 함께 고민해 주는 사람이다.",
+        "errorRate": 0.10126582278481013,
+        "firstErrorEpisodes": 3
+      },
+      {
+        "roundIndex": 4,
+        "roundId": "quote_035",
+        "text": "중요한 것은 사랑을 받는 것이 아니라 사랑을 하는 것이었다.",
+        "errorRate": 0.08974358974358974,
+        "firstErrorEpisodes": 4
+      }
+    ],
+    "expectedGeminiCalls": 1
+  }
+}

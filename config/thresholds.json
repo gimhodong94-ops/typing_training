@@ -1,0 +1,36 @@
+{
+  "practiceCount": 10,
+  "sentenceLength": {
+    "minimum": 5,
+    "maxKoreanDominant": 100,
+    "maxEnglishDominant": 150
+  },
+  "detection": {
+    "duplicateKeyMs": 50,
+    "slowdownRatio": 1.3,
+    "slowdownFollowupKeys": 5,
+    "typoChainWindowMs": 60000,
+    "typoChainErrorCount": 3,
+    "typoChainMinimumSamples": 3,
+    "shortSentenceMaxLength": 20,
+    "rushMinimumSentences": 5,
+    "intervalLongGapMs": 2000,
+    "directionMaxKeyDistance": 2,
+    "directionMinSamples": 50,
+    "accumulateSessions": 3,
+    "defaultDzMm": 25,
+    "distanceUnitMm": 19,
+    "minimumSamples": 5,
+    "groupMinimumSamples": 50,
+    "practiceWeaknessMinimumConfidence": "중간",
+    "practiceCustomRatio": 0.7,
+    "practiceGeneralRatio": 0.3
+  },
+  "weakKeyMinimumSamples": 5,
+  "confidence": {
+    "highMinimumSamples": 30,
+    "mediumMinimumSamples": 15,
+    "minimumWilsonLowerMustExceedSessionErrorRate": true,
+    "status": "임시값"
+  }
+}

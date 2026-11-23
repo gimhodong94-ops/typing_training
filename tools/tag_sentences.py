@@ -30,21 +30,18 @@ def compute_tags(text):
 
 
 def tag_file(path):
-    rows = []
+    count = 0
     with path.open(encoding="utf-8") as source:
         for line in source:
             row = json.loads(line)
-            rows.append({"id": row["id"], "category": path.stem,
-                         "text": row["text"], "tags": compute_tags(row["text"])})
-    with path.open("w", encoding="utf-8", newline="\n") as target:
-        for row in rows:
-            target.write(json.dumps(row, ensure_ascii=False) + "\n")
-    return len(rows)
+            compute_tags(row["text"])
+            count += 1
+    return count
 
 
 def main():
     for path in sorted((ROOT / "data" / "sentences").glob("*.jsonl")):
-        print(f"{path.name}: {tag_file(path)}개 문장 태그 계산 완료")
+        print(f"{path.name}: {tag_file(path)}개 문장 태그 계산 확인 완료 (태그는 파일에 저장하지 않음)")
 
 
 if __name__ == "__main__":

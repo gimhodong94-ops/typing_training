@@ -24,8 +24,11 @@ function aiApi(): Plugin {
         }
         const mod = await server.ssrLoadModule("/server/ai.ts");
         const out = await mod.handleApi("/api" + (req.url ?? ""), body, {
+          AI_PROVIDER: (process.env.AI_PROVIDER ?? env.AI_PROVIDER) === "multi-ai" ? "multi-ai" : "gemini",
+          AI_MODEL: process.env.AI_MODEL ?? env.AI_MODEL,
           GEMINI_API_KEY: process.env.GEMINI_API_KEY ?? env.GEMINI_API_KEY,
           GEMINI_MODEL: process.env.GEMINI_MODEL ?? env.GEMINI_MODEL,
+          MULTI_AI_API_KEY: process.env.MULTI_AI_API_KEY ?? env.MULTI_AI_API_KEY,
         });
         send(out.status, out.body);
       });
