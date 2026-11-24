@@ -31,7 +31,6 @@ export function Start({ history, onStart, onOpen, openSettings = false }: Props)
   const [keyMessage, setKeyMessage] = useState("");
   const [featureSettings, setFeatureSettings] = useState({ sentenceAnalysisEnabled: aiFeatures.sentenceAnalysisEnabled, questionCardsEnabled: aiFeatures.questionCardsEnabled, sentenceAnalysisConsent: false, sentenceAnalysisConsentAt: null as string | null });
   const [settingsError, setSettingsError] = useState("");
-  const [consentOpen, setConsentOpen] = useState(false);
   const isElectron = Boolean(window.typingCoach);
   const rounds = Math.min(ROUND_COUNT, sentences.length);
   const excludedByLength = useMemo(() => sentences.filter((row) => !isSentenceLengthAllowed(row.text)).length, []);
@@ -57,8 +56,7 @@ export function Start({ history, onStart, onOpen, openSettings = false }: Props)
     catch (error) { console.error("AI 기능 설정 저장 실패", error); setSettingsError(error instanceof Error ? error.message : "설정을 저장하지 못했어요 (원인: 알 수 없음). 다시 시도해 주세요."); return false; }
   };
   const toggleAnalysis = (checked: boolean) => {
-    if (checked && !featureSettings.sentenceAnalysisConsent) { setConsentOpen(true); return; }
-    void saveFeature({ sentenceAnalysisEnabled: checked });
+    void saveFeature(checked ? { sentenceAnalysisEnabled: true, sentenceAnalysisConsent: true } : { sentenceAnalysisEnabled: false });
   };
 
   const selectedKeySaved = aiProvider === "gemini" ? aiKeyStatus.hasGeminiKey : aiKeyStatus.hasMultiAIKey;
@@ -220,7 +218,6 @@ export function Start({ history, onStart, onOpen, openSettings = false }: Props)
           </details>
         )}
       </section>
-      {consentOpen && <div className="modal-backdrop"><section className="consent-dialog" role="dialog" aria-modal="true"><button className="dialog-close" aria-label="닫기" onClick={() => setConsentOpen(false)}>×</button><h2>문장 분석 동의</h2><p>선별한 연습 문장과 통계를 Gemini에 보내 문장 분석을 만들어요. 원시 키 입력은 전송하지 않습니다.</p><div className="actions"><button className="ghost" onClick={() => setConsentOpen(false)}>허용 안 함</button><button className="primary small" onClick={async () => { const ok = await saveFeature({ sentenceAnalysisConsent: true, sentenceAnalysisEnabled: true }); if (ok) setConsentOpen(false); }}>허용</button></div></section></div>}
 
       <section className="start-side" aria-label="키보드 미리보기">
         <Keyboard />

@@ -62,7 +62,6 @@ export function Result({ session, sessions, onBack, onSettings, onFeedback, onPr
   const [aiError, setAiError] = useState("");
   const [localOnly, setLocalOnly] = useState(false);
   const [features, setFeatures] = useState({ sentenceAnalysisEnabled: aiFeatures.sentenceAnalysisEnabled, questionCardsEnabled: aiFeatures.questionCardsEnabled, sentenceAnalysisConsent: false });
-  const [consentOpen, setConsentOpen] = useState(false);
   const [sentenceMessage, setSentenceMessage] = useState("");
   const [sentenceFailed, setSentenceFailed] = useState(false);
   const [sentenceBusy, setSentenceBusy] = useState(false);
@@ -139,13 +138,13 @@ export function Result({ session, sessions, onBack, onSettings, onFeedback, onPr
     setSentenceBusy(true); setSentenceFailed(false); setSentenceMessage("문장을 살펴보는 중이에요.");
     try {
       const settings = await window.typingCoach.getAISettings();
-      const savedFeatures = await window.typingCoach.getFeatureSettings();
+      let savedFeatures = await window.typingCoach.getFeatureSettings();
+      if (!savedFeatures.sentenceAnalysisConsent) savedFeatures = await window.typingCoach.saveFeatureSettings({ sentenceAnalysisConsent: true });
       setFeatures(savedFeatures);
       const blocked: string[] = [];
       if (!settings.hasGeminiKey) blocked.push("Gemini 키가 저장되어 있지 않아요. 설정에서 키를 입력해 주세요.");
-      if (!savedFeatures.sentenceAnalysisConsent) blocked.push("전송 동의가 필요해요. 동의 창에서 허용해 주세요.");
       if (!savedFeatures.sentenceAnalysisEnabled) blocked.push("문장 분석이 꺼져 있어요. 설정에서 켜 주세요.");
-      if (blocked.length) { setSentenceFailed(true); setSentenceMessage(blocked.join(" ")); if (!savedFeatures.sentenceAnalysisConsent) setConsentOpen(true); return; }
+      if (blocked.length) { setSentenceFailed(true); setSentenceMessage(blocked.join(" ")); return; }
       const selected = selectSentenceAnalysisRounds(session);
       if (!selected.length) { setSentenceMessage("이번 연습은 분석할 만큼 오타가 많은 문장이 없어요."); return; }
       const analyses: any[] = [];
@@ -171,17 +170,6 @@ export function Result({ session, sessions, onBack, onSettings, onFeedback, onPr
   const startSentenceAnalysis = () => {
     if (!selectSentenceAnalysisRounds(session).length) { setSentenceMessage("이번 연습은 오타가 적어서 따로 분석할 문장이 없어요"); return; }
     void sendSentenceAnalysis();
-  };
-  const agreeAndAnalyze = async () => {
-    setConsentOpen(false);
-    setSentenceBusy(true); setSentenceFailed(false); setSentenceMessage("문장을 살펴보는 중이에요.");
-    try {
-      const next = await window.typingCoach?.saveFeatureSettings({ sentenceAnalysisConsent: true });
-      if (next) setFeatures(next);
-      await sendSentenceAnalysis();
-    } catch (error) {
-      setSentenceFailed(true); setSentenceMessage(error instanceof Error ? error.message : "동의를 저장하지 못했어요."); setSentenceBusy(false);
-    }
   };
   const storedSentenceAnalyses = Array.isArray(session.aiAnalysis) ? session.aiAnalysis as any[] : [];
   const bundleCards = baseline.eligibleWeakGroups.map((group: any) => groupCard(group, baseline.weaknessEligibility.matchingSessions));
@@ -294,16 +282,7 @@ export function Result({ session, sessions, onBack, onSettings, onFeedback, onPr
         </article>)}
       </section>}
 
-      {consentOpen && <div className="modal-backdrop" role="presentation"><section className="consent-dialog" role="dialog" aria-modal="true" aria-labelledby="analysis-consent-title">
-        <h2 id="analysis-consent-title">문장 분석 전송 동의</h2>
-        <p>선별된 연습 문장과 오타 집계만 Google Gemini로 보내 문장별 분석과 질문을 만들어요. 키를 누른 순서와 시각 등 원시 입력은 전송하지 않아요. 동의는 설정에서 언제든 끌 수 있어요.</p>
-        <button className="dialog-close" aria-label="닫기" onClick={() => setConsentOpen(false)}>×</button>
-        <button className="text-link" onClick={() => { setConsentOpen(false); onSettings(); }}>문장 분석 설정 열기</button>
-        <div className="actions"><button className="ghost" onClick={() => setConsentOpen(false)}>허용 안 함</button><button className="primary small" onClick={() => void agreeAndAnalyze()}>허용</button></div>
-      </section></div>}
-
       <details className="result-details"><summary>자세히 보기</summary><div className="details-content">
-
       <section className="panel">
         <h2>라운드별 속도</h2>
         <div className="bars" role="group" aria-label="라운드별 분당 타수 막대그래프">
